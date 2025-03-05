@@ -5,99 +5,87 @@ import { useNavigate } from 'react-router-dom';
 
 const bannerImages = [
   {
-    url: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+    url: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=2070&q=80',
     alt: 'Electronics Sale',
     link: '/category/electronics',
     title: 'Mega Electronics Sale',
     subtitle: 'Up to 40% off on latest gadgets',
-    buttonText: 'Shop Now'
+    buttonText: 'Shop Now',
   },
   {
-    url: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+    url: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=2070&q=80',
     alt: 'Fashion Collection',
     link: '/category/fashion',
     title: 'New Fashion Collection',
     subtitle: 'Discover the latest trends',
-    buttonText: 'Explore More'
+    buttonText: 'Explore More',
   },
   {
-    url: 'https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+    url: 'https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?auto=format&fit=crop&w=2070&q=80',
     alt: 'Home & Furniture',
     link: '/category/furniture',
     title: 'Home & Furniture Sale',
     subtitle: 'Transform your living space',
-    buttonText: 'View Collection'
+    buttonText: 'View Collection',
   },
 ];
 
 const BannerContainer = styled(Box)({
   position: 'relative',
   width: '100vw',
-  height: '80vh',
+  height: '70vh',
   overflow: 'hidden',
   margin: 0,
   padding: 0,
-  left: '50%',
-  right: '50%',
-  marginLeft: '-50vw',
-  marginRight: '-50vw',
-  marginTop: '-32px',
-  display: 'block',
-  lineHeight: 0,
-  fontSize: 0,
-  verticalAlign: 'top',
-  '& > *': {
-    fontSize: '1rem'
-  }
+  display: 'flex',
+  marginTop: '-10px',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginLeft: 'calc(-50vw + 50%)',
+  marginRight: 'calc(-50vw + 50%)',
 });
 
 const BannerImage = styled('img')({
-  width: '100vw',
+  width: '100%',
   height: '100%',
   objectFit: 'cover',
   display: 'block',
-  verticalAlign: 'top',
-  margin: 0,
-  padding: 0
+  position: 'absolute',
+  top: 0,
+  left: 0,
 });
 
 const BannerOverlay = styled(Box)(({ theme }) => ({
   position: 'absolute',
   top: 0,
   left: 0,
-  right: 0,
-  bottom: 0,
+  width: '100%',
+  height: '100%',
   background: 'linear-gradient(to right, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.1) 100%)',
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'center',
+  alignItems: 'flex-start',
   padding: theme.spacing(4, 8),
   color: 'white',
+  zIndex: 2,
   [theme.breakpoints.down('sm')]: {
     padding: theme.spacing(2, 4),
     background: 'linear-gradient(to right, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.6) 100%)',
   },
 }));
 
-const BannerControls = styled(Box)(({ theme }) => ({
+const BannerControls = styled(Box)({
   position: 'absolute',
-  top: 0,
+  top: '50%',
   left: 0,
   right: 0,
-  bottom: 0,
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
-  padding: theme.spacing(0, 2),
-  opacity: 0,
-  transition: 'opacity 0.3s ease',
-  '& .MuiIconButton-root': {
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    '&:hover': {
-      backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    },
-  },
-}));
+  padding: '0 16px',
+  zIndex: 3,
+});
 
 const BannerDots = styled(Box)(({ theme }) => ({
   position: 'absolute',
@@ -106,7 +94,7 @@ const BannerDots = styled(Box)(({ theme }) => ({
   transform: 'translateX(-50%)',
   display: 'flex',
   gap: theme.spacing(1),
-  zIndex: 2,
+  zIndex: 3,
 }));
 
 const Dot = styled('button')<{ active?: boolean }>(({ theme, active }) => ({
@@ -124,7 +112,6 @@ const Dot = styled('button')<{ active?: boolean }>(({ theme, active }) => ({
 
 const BannerButton = styled(Button)(({ theme }) => ({
   marginTop: theme.spacing(3),
-  backgroundColor: 'transparent',
   color: 'white',
   padding: theme.spacing(1.5, 4),
   borderRadius: '30px',
@@ -133,30 +120,9 @@ const BannerButton = styled(Button)(({ theme }) => ({
   fontWeight: 600,
   transition: 'all 0.3s ease',
   textTransform: 'none',
-  position: 'relative',
-  overflow: 'hidden',
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: '100%',
-    height: '100%',
-    backgroundColor: theme.palette.secondary.main,
-    transform: 'scaleX(0)',
-    transformOrigin: 'right',
-    transition: 'transform 0.3s ease',
-    zIndex: -1,
-  },
   '&:hover': {
+    backgroundColor: theme.palette.secondary.main,
     borderColor: theme.palette.secondary.main,
-    backgroundColor: 'transparent',
-    transform: 'translateY(-3px)',
-    boxShadow: '0 5px 15px rgba(0,0,0,0.3)',
-    '&::before': {
-      transform: 'scaleX(1)',
-      transformOrigin: 'left',
-    },
   },
   [theme.breakpoints.down('sm')]: {
     padding: theme.spacing(1, 3),
@@ -205,7 +171,7 @@ const Banner: React.FC = () => {
           key={index}
           sx={{
             position: 'absolute',
-            width: '100vw',
+            width: '100%',
             height: '100%',
             opacity: index === currentSlide ? 1 : 0,
             transition: 'opacity 0.5s ease-in-out',
@@ -221,7 +187,6 @@ const Banner: React.FC = () => {
                 mb: 2,
                 fontSize: { xs: '2rem', md: '3.5rem' },
                 textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-                letterSpacing: '-0.5px',
               }}
             >
               {image.title}
@@ -231,27 +196,20 @@ const Banner: React.FC = () => {
               sx={{
                 mb: 3,
                 fontSize: { xs: '1.2rem', md: '1.5rem' },
-                fontWeight: 400,
-                textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
                 opacity: 0.9,
                 maxWidth: '600px',
               }}
             >
               {image.subtitle}
             </Typography>
-            <Box sx={{ mt: 2 }}>
-              <BannerButton
-                variant="outlined"
-                onClick={() => handleBannerClick(image.link)}
-              >
-                {image.buttonText}
-              </BannerButton>
-            </Box>
+            <BannerButton onClick={() => handleBannerClick(image.link)}>
+              {image.buttonText}
+            </BannerButton>
           </BannerOverlay>
         </Box>
       ))}
-      
-      <BannerControls className="banner-controls">
+
+      <BannerControls>
         <IconButton onClick={prevSlide} size="large">
           <KeyboardArrowLeft />
         </IconButton>
@@ -262,15 +220,11 @@ const Banner: React.FC = () => {
 
       <BannerDots>
         {bannerImages.map((_, index) => (
-          <Dot
-            key={index}
-            active={index === currentSlide}
-            onClick={() => goToSlide(index)}
-          />
+          <Dot key={index} active={index === currentSlide} onClick={() => goToSlide(index)} />
         ))}
       </BannerDots>
     </BannerContainer>
   );
 };
 
-export default Banner; 
+export default Banner;

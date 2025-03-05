@@ -1,16 +1,32 @@
 import React from 'react';
-import { Box, Container } from '@mui/material';
+import { Box } from '@mui/material';
 import Banner from '../components/Banner';
+import HotProducts from '../components/HotProducts';
+import FeaturedProducts from '../components/FeaturedProducts';
 
 const HomePage: React.FC = () => {
   return (
-    <Box>
+    <Box
+      sx={{
+        width: '100vw',
+        margin: 0,
+        padding: 0,
+        position: 'relative',
+        display: 'block',
+        overflowX: 'hidden',
+        marginLeft: 'calc(-50vw + 50%)',
+        marginRight: 'calc(-50vw + 50%)',
+        '& > *': {
+          margin: 0,
+          padding: 0,
+        }
+      }}
+    >
       <Banner />
-      <Container maxWidth="lg" sx={{ mt: 4 }}>
-        {/* Other content will be added here */}
-      </Container>
+      <HotProducts />
+      <FeaturedProducts />
     </Box>
   );
 };
 
-export default HomePage; 
+export default HomePage;
