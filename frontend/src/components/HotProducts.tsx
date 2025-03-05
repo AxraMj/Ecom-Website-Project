@@ -3,6 +3,7 @@ import { Box, Container, Typography, Card, CardMedia, CardContent, CardActions, 
 import { styled } from '@mui/material/styles';
 import axios from 'axios';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 
 interface Product {
   id: string;
@@ -83,6 +84,7 @@ const HotProducts: React.FC = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
+  const navigate = useNavigate();
 
   const handleScroll = () => {
     if (scrollContainerRef.current) {
@@ -101,6 +103,10 @@ const HotProducts: React.FC = () => {
         behavior: 'smooth'
       });
     }
+  };
+
+  const handleProductClick = (productId: string) => {
+    navigate(`/product/${productId}`);
   };
 
   useEffect(() => {
@@ -185,7 +191,13 @@ const HotProducts: React.FC = () => {
             onScroll={handleScroll}
           >
             {products.map((product) => (
-              <ProductCard key={product.id}>
+              <ProductCard 
+                key={product.id}
+                onClick={() => handleProductClick(product.id)}
+                sx={{
+                  cursor: 'pointer',
+                }}
+              >
                 <ProductImage
                   image={product.image}
                   title={product.title}
@@ -236,6 +248,10 @@ const HotProducts: React.FC = () => {
                       '&:hover': {
                         bgcolor: 'secondary.dark',
                       }
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Add to cart logic here
                     }}
                   >
                     Add to Cart

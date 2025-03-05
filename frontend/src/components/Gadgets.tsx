@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Container, Typography, Card, CardMedia, CardContent, CardActions, Button, Rating, Grid, CircularProgress, Alert } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 interface Product {
@@ -37,6 +38,7 @@ const PriceTypography = styled(Typography)({
 });
 
 const Gadgets: React.FC = () => {
+  const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -163,6 +165,10 @@ const Gadgets: React.FC = () => {
     fetchProducts();
   }, []);
 
+  const handleProductClick = (productId: string) => {
+    navigate(`/product/${productId}`);
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
@@ -215,7 +221,16 @@ const Gadgets: React.FC = () => {
         <Grid container spacing={4}>
           {products.map((product) => (
             <Grid item key={product.id} xs={12} sm={6} md={4}>
-              <ProductCard>
+              <ProductCard
+                sx={{
+                  cursor: 'pointer',
+                  '&:hover': {
+                    transform: 'translateY(-5px)',
+                    boxShadow: 4,
+                  },
+                }}
+                onClick={() => handleProductClick(product.id)}
+              >
                 <ProductImage
                   image={product.image}
                   title={product.title}
@@ -230,9 +245,9 @@ const Gadgets: React.FC = () => {
                       ({product.rating.count})
                     </Typography>
                   </Box>
-                  <PriceTypography variant="h6">
+                  <Typography variant="h6" sx={{ color: '#2e7d32', fontWeight: 600 }}>
                     ${product.price.toFixed(2)}
-                  </PriceTypography>
+                  </Typography>
                 </CardContent>
                 <CardActions sx={{ mt: 'auto' }}>
                   <Button 
@@ -244,6 +259,10 @@ const Gadgets: React.FC = () => {
                       '&:hover': {
                         bgcolor: '#1b5e20',
                       },
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Add to cart logic here
                     }}
                   >
                     Add to Cart

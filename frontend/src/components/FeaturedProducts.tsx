@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Container, Typography, Card, CardMedia, CardContent, CardActions, Button, Rating, Grid, CircularProgress, Alert } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 interface Product {
   id: string;
@@ -55,6 +56,7 @@ const FeaturedProducts: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -78,6 +80,10 @@ const FeaturedProducts: React.FC = () => {
 
     fetchProducts();
   }, []);
+
+  const handleProductClick = (productId: string) => {
+    navigate(`/product/${productId}`);
+  };
 
   if (loading) {
     return (
@@ -129,7 +135,16 @@ const FeaturedProducts: React.FC = () => {
         <Grid container spacing={3} sx={{ px: { xs: 2, md: 4 } }}>
           {products.map((product) => (
             <Grid item xs={12} sm={6} md={4} key={product.id}>
-              <ProductCard>
+              <ProductCard
+                onClick={() => handleProductClick(product.id)}
+                sx={{
+                  cursor: 'pointer',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: 3,
+                  },
+                }}
+              >
                 <ProductImage
                   image={product.image}
                   title={product.title}
@@ -185,6 +200,10 @@ const FeaturedProducts: React.FC = () => {
                         transform: 'translateY(-2px)',
                         boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                       }
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Add to cart logic here
                     }}
                   >
                     View Details
