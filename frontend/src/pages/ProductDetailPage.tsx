@@ -96,55 +96,183 @@ const ProductDetailPage: React.FC = () => {
 
   const sizes = ['S', 'M', 'L', 'XL', 'XXL'];
 
+  // Fallback products data
+  const fallbackProducts: { [key: string]: Product[] } = {
+    'furniture': [
+      {
+        id: 'f1',
+        title: 'Modern Sofa Set',
+        price: 899.99,
+        description: 'Elegant and comfortable modern sofa set perfect for your living room. Features high-quality fabric upholstery and solid wood frame.',
+        category: 'furniture',
+        image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc',
+        rating: { rate: 4.8, count: 120 }
+      },
+      {
+        id: 'f2',
+        title: 'Dining Table Set',
+        price: 649.99,
+        description: 'Contemporary dining table set with 6 chairs. Made from premium materials with a beautiful finish.',
+        category: 'furniture',
+        image: 'https://images.unsplash.com/photo-1617104662896-5090099d799d',
+        rating: { rate: 4.6, count: 95 }
+      },
+      {
+        id: 'f3',
+        title: 'Queen Size Bed Frame',
+        price: 499.99,
+        description: 'Sturdy queen size bed frame with modern design. Includes headboard and support system.',
+        category: 'furniture',
+        image: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85',
+        rating: { rate: 4.7, count: 150 }
+      },
+      {
+        id: 'f4',
+        title: 'Kitchen Cabinet Set',
+        price: 1299.99,
+        description: 'Complete kitchen cabinet set with modern design and ample storage space.',
+        category: 'furniture',
+        image: 'https://images.unsplash.com/photo-1556910103-1c02745aae4d',
+        rating: { rate: 4.9, count: 80 }
+      }
+    ],
+    'grocery': [
+      {
+        id: 'g1',
+        title: 'Organic Fresh Produce Bundle',
+        price: 49.99,
+        description: 'Fresh, organic produce bundle including seasonal vegetables and fruits.',
+        category: 'grocery',
+        image: 'https://images.unsplash.com/photo-1610348725531-843dff563e2c',
+        rating: { rate: 4.5, count: 200 }
+      },
+      {
+        id: 'g2',
+        title: 'Gourmet Coffee Selection',
+        price: 34.99,
+        description: 'Premium coffee beans from various regions, carefully selected for coffee enthusiasts.',
+        category: 'grocery',
+        image: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e',
+        rating: { rate: 4.7, count: 150 }
+      },
+      {
+        id: 'g3',
+        title: 'Artisan Bread Collection',
+        price: 24.99,
+        description: 'Freshly baked artisan bread collection featuring various types of bread.',
+        category: 'grocery',
+        image: 'https://images.unsplash.com/photo-1608198093002-ad4e005484ec',
+        rating: { rate: 4.6, count: 180 }
+      }
+    ],
+    'beauty': [
+      {
+        id: 'b1',
+        title: 'Luxury Skincare Set',
+        price: 129.99,
+        description: 'Complete luxury skincare set with cleanser, toner, serum, and moisturizer.',
+        category: 'beauty',
+        image: 'https://images.unsplash.com/photo-1612817288484-6f916006741a',
+        rating: { rate: 4.8, count: 220 }
+      },
+      {
+        id: 'b2',
+        title: 'Premium Makeup Collection',
+        price: 89.99,
+        description: 'High-end makeup collection featuring eyeshadows, lipsticks, and face products.',
+        category: 'beauty',
+        image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348',
+        rating: { rate: 4.6, count: 190 }
+      },
+      {
+        id: 'b3',
+        title: 'Natural Hair Care Bundle',
+        price: 59.99,
+        description: 'Natural and organic hair care products for all hair types.',
+        category: 'beauty',
+        image: 'https://images.unsplash.com/photo-1526947425960-945c6e72858f',
+        rating: { rate: 4.7, count: 170 }
+      }
+    ],
+    'books': [
+      {
+        id: 'bk1',
+        title: 'Bestseller Fiction Collection',
+        price: 79.99,
+        description: 'Collection of top-rated fiction books from renowned authors.',
+        category: 'books',
+        image: 'https://images.unsplash.com/photo-1524578271613-d550eacf6090',
+        rating: { rate: 4.9, count: 250 }
+      },
+      {
+        id: 'bk2',
+        title: 'Business & Leadership Bundle',
+        price: 89.99,
+        description: 'Essential business and leadership books for professional development.',
+        category: 'books',
+        image: 'https://images.unsplash.com/photo-1589998059171-988d887df646',
+        rating: { rate: 4.7, count: 180 }
+      },
+      {
+        id: 'bk3',
+        title: 'Self-Development Collection',
+        price: 69.99,
+        description: 'Curated collection of self-help and personal development books.',
+        category: 'books',
+        image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c',
+        rating: { rate: 4.8, count: 210 }
+      }
+    ]
+  };
+
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await axios.get(`https://fakestoreapi.com/products/${id}`);
-        setProduct(response.data);
 
-        // Fetch recommended products from the same category
-        const recommendedResponse = await axios.get('https://fakestoreapi.com/products');
-        const filtered = recommendedResponse.data
-          .filter((p: Product) => 
-            p.id !== response.data.id && 
-            p.category.toLowerCase() === response.data.category.toLowerCase()
-          )
-          .slice(0, 4);
-        
-        // If not enough products in the same category, add products from similar categories
-        if (filtered.length < 4) {
-          const currentCategory = response.data.category.toLowerCase();
-          const similarCategories = new Set<string>();
-          
-          // Define similar category mappings
-          if (currentCategory.includes('electronics')) {
-            similarCategories.add('electronics');
-            similarCategories.add('gadgets');
-          } else if (currentCategory.includes('clothing') || currentCategory.includes('shoes')) {
-            similarCategories.add('clothing');
-            similarCategories.add('shoes');
-            similarCategories.add('accessories');
-          } else if (currentCategory.includes('kitchen') || currentCategory.includes('furniture')) {
-            similarCategories.add('kitchen');
-            similarCategories.add('furniture');
-            similarCategories.add('home');
-          }
+        // Check if the product ID matches any fallback product
+        let foundProduct: Product | null = null;
+        let allFallbackProducts: Product[] = [];
 
-          const additionalProducts = recommendedResponse.data
+        // Search through all fallback products
+        Object.values(fallbackProducts).forEach(categoryProducts => {
+          categoryProducts.forEach(product => {
+            allFallbackProducts.push(product);
+            if (product.id === id) {
+              foundProduct = product;
+            }
+          });
+        });
+
+        if (foundProduct) {
+          setProduct(foundProduct);
+          // Get recommended products from the same category
+          const sameCategory = allFallbackProducts.filter(p => 
+            p.id !== foundProduct!.id && 
+            p.category === foundProduct!.category
+          );
+          // If not enough products in same category, add some from other categories
+          const otherProducts = allFallbackProducts.filter(p => 
+            p.id !== foundProduct!.id && 
+            p.category !== foundProduct!.category
+          );
+          const recommended = [...sameCategory, ...otherProducts].slice(0, 4);
+          setRecommendedProducts(recommended);
+        } else {
+          // If not a fallback product, try the API
+          const response = await axios.get(`https://fakestoreapi.com/products/${id}`);
+          setProduct(response.data);
+
+          // Fetch recommended products from the API
+          const recommendedResponse = await axios.get('https://fakestoreapi.com/products');
+          const filtered = recommendedResponse.data
             .filter((p: Product) => 
               p.id !== response.data.id && 
-              !filtered.find((f: Product) => f.id === p.id) &&
-              Array.from(similarCategories).some(cat => 
-                p.category.toLowerCase().includes(cat) || 
-                p.title.toLowerCase().includes(cat)
-              )
+              p.category.toLowerCase() === response.data.category.toLowerCase()
             )
-            .slice(0, 4 - filtered.length);
-
-          setRecommendedProducts([...filtered, ...additionalProducts]);
-        } else {
+            .slice(0, 4);
+          
           setRecommendedProducts(filtered);
         }
       } catch (err) {
