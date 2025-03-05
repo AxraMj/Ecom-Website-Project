@@ -3,6 +3,9 @@ import { Box } from '@mui/material';
 import Banner from '../components/Banner';
 import HotProducts from '../components/HotProducts';
 import FeaturedProducts from '../components/FeaturedProducts';
+import ElectronicsProducts from '../components/ElectronicsProducts';
+import ShoesProducts from '../components/ShoesProducts';
+import Gadgets from '../components/Gadgets';
 
 const HomePage: React.FC = () => {
   return (
@@ -25,6 +28,9 @@ const HomePage: React.FC = () => {
       <Banner />
       <HotProducts />
       <FeaturedProducts />
+      <ElectronicsProducts />
+      <ShoesProducts />
+      <Gadgets />
     </Box>
   );
 };
