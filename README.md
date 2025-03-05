@@ -213,3 +213,5 @@ Next steps:
 - Payment integration
 - Image upload functionality
 - Search and filtering features 
+
+npm run seed

@@ -63,13 +63,8 @@ const FeaturedProducts: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        // Fetch all products first
-        const response = await axios.get('https://fakestoreapi.com/products');
-        // Sort by rating and take top 6
-        const sortedProducts = response.data
-          .sort((a: Product, b: Product) => b.rating.rate - a.rating.rate)
-          .slice(0, 6);
-        setProducts(sortedProducts);
+        const response = await axios.get('http://localhost:5000/api/featured-products');
+        setProducts(response.data);
       } catch (err) {
         setError('Failed to load featured products. Please try again later.');
         console.error('Error fetching products:', err);

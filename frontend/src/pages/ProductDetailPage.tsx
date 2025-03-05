@@ -25,6 +25,7 @@ import axios from 'axios';
 
 interface Product {
   id: string;
+  _id?: string;  // MongoDB ID
   title: string;
   price: number;
   description: string;
@@ -34,6 +35,12 @@ interface Product {
     rate: number;
     count: number;
   };
+  stock?: number;
+  isFeatured?: boolean;
+  isCustom?: boolean;
+  source?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface TabPanelProps {
@@ -231,59 +238,46 @@ const ProductDetailPage: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        // Check if the product ID matches any fallback product
-        let foundProduct: Product | null = null;
-        let allFallbackProducts: Product[] = [];
-
-        // Search through all fallback products
-        Object.values(fallbackProducts).forEach(categoryProducts => {
-          categoryProducts.forEach(product => {
-            allFallbackProducts.push(product);
-            if (product.id === id) {
-              foundProduct = product;
-            }
-          });
-        });
-
-        if (foundProduct) {
-          setProduct(foundProduct);
-          // Get recommended products from the same category
-          const sameCategory = allFallbackProducts.filter(p => 
-            p.id !== foundProduct!.id && 
-            p.category === foundProduct!.category
-          );
-          // If not enough products in same category, add some from other categories
-          const otherProducts = allFallbackProducts.filter(p => 
-            p.id !== foundProduct!.id && 
-            p.category !== foundProduct!.category
-          );
-          const recommended = [...sameCategory, ...otherProducts].slice(0, 4);
-          setRecommendedProducts(recommended);
-        } else {
-          // If not a fallback product, try the API
-          const response = await axios.get(`https://fakestoreapi.com/products/${id}`);
-          setProduct(response.data);
-
-          // Fetch recommended products from the API
-          const recommendedResponse = await axios.get('https://fakestoreapi.com/products');
-          const filtered = recommendedResponse.data
-            .filter((p: Product) => 
-              p.id !== response.data.id && 
-              p.category.toLowerCase() === response.data.category.toLowerCase()
-            )
-            .slice(0, 4);
-          
-          setRecommendedProducts(filtered);
+        if (!id) {
+          throw new Error('Product ID is required');
         }
-      } catch (err) {
-        setError('Failed to load product details. Please try again later.');
+
+        // Try to fetch from our backend API
+        const response = await axios.get(`http://localhost:5000/api/products/${id}`);
+        if (response.data) {
+          const productData = {
+            ...response.data,
+            id: response.data.id || response.data._id // Use the id from the backend
+          };
+          setProduct(productData);
+          
+          // Get recommended products from the same category
+          const recommendedResponse = await axios.get(`http://localhost:5000/api/products/category/${response.data.category}`);
+          const filteredRecommended = recommendedResponse.data
+            .filter((p: Product) => {
+              const productId = p.id || p._id;
+              const currentId = productData.id || productData._id;
+              return productId?.toString() !== currentId?.toString();
+            })
+            .map((p: Product) => ({
+              ...p,
+              id: p.id || p._id // Ensure each recommended product has an id field
+            }))
+            .slice(0, 4);
+          setRecommendedProducts(filteredRecommended);
+        }
+      } catch (err: any) {
+        const errorMessage = err.response?.data?.message || err.message || 'Failed to load product details';
+        setError(errorMessage);
         console.error('Error fetching product:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProduct();
+    if (id) {
+      fetchProduct();
+    }
   }, [id]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -319,165 +313,187 @@ const ProductDetailPage: React.FC = () => {
   return (
     <Container maxWidth="xl" sx={{ py: 6 }}>
       <Grid container spacing={6}>
-        {/* Product Image */}
-        <Grid item xs={12} md={6}>
-          <ProductImage src={product.image} alt={product.title} />
-        </Grid>
-
-        {/* Product Details */}
-        <Grid item xs={12} md={6}>
-          <Box sx={{ mb: 2 }}>
-            <Chip 
-              label={product.category} 
-              sx={{ 
-                mb: 2,
-                backgroundColor: '#e8f5e9',
-                color: '#2e7d32',
-                fontWeight: 600
-              }} 
-            />
-            <Typography variant="h4" component="h1" sx={{ mb: 2, fontWeight: 600 }}>
+        <Grid container spacing={4}>
+          <Grid item xs={12} md={6}>
+            <ProductImage src={product.image} alt={product.title} />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Typography variant="h4" component="h1" gutterBottom>
               {product.title}
             </Typography>
+            
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
               <Rating value={product.rating.rate} precision={0.1} readOnly />
-              <Typography variant="body2" sx={{ ml: 1, color: 'text.secondary' }}>
+              <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
                 ({product.rating.count} reviews)
               </Typography>
             </Box>
-            <Typography variant="h4" sx={{ color: '#2e7d32', fontWeight: 600, mb: 3 }}>
+
+            <Typography variant="h5" color="primary" sx={{ mb: 2 }}>
               ${product.price.toFixed(2)}
             </Typography>
-          </Box>
 
-          {/* Size Selection */}
-          <Box sx={{ mb: 4 }}>
-            <Typography variant="h6" sx={{ mb: 2 }}>Select Size</Typography>
-            <Box>
-              {sizes.map((size) => (
-                <SizeButton
-                  key={size}
-                  variant="outlined"
-                  className={selectedSize === size ? 'selected' : ''}
-                  onClick={() => handleSizeChange(size)}
-                >
-                  {size}
-                </SizeButton>
-              ))}
-            </Box>
-          </Box>
-
-          {/* Action Buttons */}
-          <Box sx={{ display: 'flex', gap: 2, mb: 4 }}>
-            <Button
-              variant="contained"
-              size="large"
-              sx={{
-                flex: 1,
-                bgcolor: '#2e7d32',
-                '&:hover': { bgcolor: '#1b5e20' },
-                py: 1.5,
-              }}
-            >
-              Add to Cart
-            </Button>
-            <IconButton
-              onClick={toggleWishlist}
-              sx={{
-                border: '1px solid',
-                borderColor: 'divider',
-                borderRadius: 1,
-                p: 2,
-              }}
-            >
-              {isWishlisted ? <Favorite color="error" /> : <FavoriteBorder />}
-            </IconButton>
-          </Box>
-
-          {/* Tabs */}
-          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-            <Tabs value={tabValue} onChange={handleTabChange}>
-              <Tab label="Details" />
-              <Tab label="Reviews" />
-              <Tab label="Size & Fit" />
-            </Tabs>
-          </Box>
-
-          <TabPanel value={tabValue} index={0}>
-            <Typography variant="body1">{product.description}</Typography>
-          </TabPanel>
-
-          <TabPanel value={tabValue} index={1}>
-            <Typography variant="body1">
-              Average Rating: {product.rating.rate}/5 ({product.rating.count} reviews)
-            </Typography>
-            {/* Add review list component here */}
-          </TabPanel>
-
-          <TabPanel value={tabValue} index={2}>
-            <Typography variant="body1">
-              Size Guide and Fit Details
-              {/* Add size guide component here */}
-            </Typography>
-          </TabPanel>
-        </Grid>
-      </Grid>
-
-      {/* Recommended Products */}
-      <Box sx={{ mt: 8 }}>
-        <Typography variant="h5" sx={{ mb: 4, fontWeight: 600 }}>
-          Recommended Products
-        </Typography>
-        <Grid container spacing={4}>
-          {recommendedProducts.map((recommendedProduct) => (
-            <Grid item key={recommendedProduct.id} xs={12} sm={6} md={3}>
-              <Box
-                onClick={() => navigate(`/product/${recommendedProduct.id}`)}
-                sx={{
-                  p: 2,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  borderRadius: 2,
-                  transition: 'transform 0.2s ease-in-out',
-                  cursor: 'pointer',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: 2,
-                  },
+            {product.stock !== undefined && (
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  mb: 2,
+                  color: product.stock > 0 ? 'success.main' : 'error.main'
                 }}
               >
-                <img
-                  src={recommendedProduct.image}
-                  alt={recommendedProduct.title}
-                  style={{
-                    width: '100%',
-                    height: '200px',
-                    objectFit: 'contain',
-                    marginBottom: '16px',
-                  }}
-                />
-                <Typography
-                  variant="subtitle1"
+                {product.stock > 0 ? `In Stock (${product.stock} available)` : 'Out of Stock'}
+              </Typography>
+            )}
+
+            <Chip 
+              label={product.category} 
+              color="secondary" 
+              sx={{ mb: 2 }}
+            />
+
+            {product.isFeatured && (
+              <Chip 
+                label="Featured Product" 
+                color="primary" 
+                sx={{ mb: 2, ml: 1 }}
+              />
+            )}
+
+            <Typography variant="body1" sx={{ mb: 3 }}>
+              {product.description}
+            </Typography>
+
+            <Box sx={{ mb: 3 }}>
+              {(product.stock ?? 0) > 0 && (
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  size="large"
+                  fullWidth
+                  onClick={() => {/* Add to cart logic */}}
+                >
+                  Add to Cart
+                </Button>
+              )}
+            </Box>
+
+            {/* Size Selection */}
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h6" sx={{ mb: 2 }}>Select Size</Typography>
+              <Box>
+                {sizes.map((size) => (
+                  <SizeButton
+                    key={size}
+                    variant="outlined"
+                    className={selectedSize === size ? 'selected' : ''}
+                    onClick={() => handleSizeChange(size)}
+                  >
+                    {size}
+                  </SizeButton>
+                ))}
+              </Box>
+            </Box>
+
+            {/* Action Buttons */}
+            <Box sx={{ display: 'flex', gap: 2, mb: 4 }}>
+              <IconButton
+                onClick={toggleWishlist}
+                sx={{
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 1,
+                  p: 2,
+                }}
+              >
+                {isWishlisted ? <Favorite color="error" /> : <FavoriteBorder />}
+              </IconButton>
+            </Box>
+
+            {/* Tabs */}
+            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+              <Tabs value={tabValue} onChange={handleTabChange}>
+                <Tab label="Details" />
+                <Tab label="Reviews" />
+                <Tab label="Size & Fit" />
+              </Tabs>
+            </Box>
+
+            <TabPanel value={tabValue} index={0}>
+              <Typography variant="body1">{product.description}</Typography>
+            </TabPanel>
+
+            <TabPanel value={tabValue} index={1}>
+              <Typography variant="body1">
+                Average Rating: {product.rating.rate}/5 ({product.rating.count} reviews)
+              </Typography>
+              {/* Add review list component here */}
+            </TabPanel>
+
+            <TabPanel value={tabValue} index={2}>
+              <Typography variant="body1">
+                Size Guide and Fit Details
+                {/* Add size guide component here */}
+              </Typography>
+            </TabPanel>
+          </Grid>
+        </Grid>
+
+        {/* Recommended Products */}
+        <Box sx={{ mt: 8 }}>
+          <Typography variant="h5" sx={{ mb: 4, fontWeight: 600 }}>
+            Recommended Products
+          </Typography>
+          <Grid container spacing={4}>
+            {recommendedProducts.map((recommendedProduct) => (
+              <Grid item key={recommendedProduct.id || recommendedProduct._id} xs={12} sm={6} md={3}>
+                <Box
+                  onClick={() => navigate(`/product/${recommendedProduct.id || recommendedProduct._id}`)}
                   sx={{
-                    mb: 1,
-                    fontWeight: 600,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
+                    p: 2,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    borderRadius: 2,
+                    transition: 'transform 0.2s ease-in-out',
+                    cursor: 'pointer',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: 2,
+                    },
                   }}
                 >
-                  {recommendedProduct.title}
-                </Typography>
-                <Typography variant="h6" sx={{ color: '#2e7d32', fontWeight: 600 }}>
-                  ${recommendedProduct.price.toFixed(2)}
-                </Typography>
-              </Box>
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
+                  <img
+                    src={recommendedProduct.image}
+                    alt={recommendedProduct.title}
+                    style={{
+                      width: '100%',
+                      height: '200px',
+                      objectFit: 'contain',
+                      marginBottom: '16px',
+                    }}
+                  />
+                  <Typography
+                    variant="subtitle1"
+                    sx={{
+                      mb: 1,
+                      fontWeight: 600,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                    }}
+                  >
+                    {recommendedProduct.title}
+                  </Typography>
+                  <Typography variant="h6" sx={{ color: '#2e7d32', fontWeight: 600 }}>
+                    ${recommendedProduct.price.toFixed(2)}
+                  </Typography>
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      </Grid>
     </Container>
   );
 };

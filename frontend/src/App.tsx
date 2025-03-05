@@ -9,6 +9,7 @@ import ProductDetailPage from './pages/ProductDetailPage';
 import CategoryProductsPage from './pages/CategoryProductsPage';
 import TodaysDealsPage from './pages/TodaysDealsPage';
 import SearchResultsPage from './pages/SearchResultsPage';
+import AdminPanel from './pages/AdminPanel';
 
 const App: React.FC = () => {
   return (
@@ -22,6 +23,7 @@ const App: React.FC = () => {
             <Route path="/category/:category" element={<CategoryProductsPage />} />
             <Route path="/deals" element={<TodaysDealsPage />} />
             <Route path="/search" element={<SearchResultsPage />} />
+            <Route path="/admin" element={<AdminPanel />} />
           </Routes>
         </MainLayout>
       </Router>

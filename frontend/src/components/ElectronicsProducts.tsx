@@ -115,7 +115,7 @@ const ElectronicsProducts: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await axios.get('https://fakestoreapi.com/products/category/electronics');
+        const response = await axios.get('http://localhost:5000/api/products/category/electronics');
         setProducts(response.data);
       } catch (err) {
         setError('Failed to load electronics products. Please try again later.');

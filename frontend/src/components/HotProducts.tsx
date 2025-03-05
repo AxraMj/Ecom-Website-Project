@@ -114,8 +114,12 @@ const HotProducts: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await axios.get('https://fakestoreapi.com/products?limit=8');
-        setProducts(response.data);
+        const response = await axios.get('http://localhost:5000/api/products');
+        // Sort by rating and take top 8
+        const sortedProducts = response.data
+          .sort((a: Product, b: Product) => b.rating.rate - a.rating.rate)
+          .slice(0, 8);
+        setProducts(sortedProducts);
       } catch (err) {
         setError('Failed to load products. Please try again later.');
         console.error('Error fetching products:', err);

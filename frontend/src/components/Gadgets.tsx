@@ -48,112 +48,16 @@ const Gadgets: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await axios.get('https://fakestoreapi.com/products');
+        const response = await axios.get('http://localhost:5000/api/products');
         const gadgetProducts = response.data.filter((product: Product) =>
-          product.category.toLowerCase().includes('electronics') ||
+          product.category === 'electronics' ||
+          product.category === 'gaming' ||
           product.title.toLowerCase().includes('gadget') ||
           product.title.toLowerCase().includes('smart') ||
           product.title.toLowerCase().includes('device') ||
           product.title.toLowerCase().includes('watch')
         );
-        setProducts(gadgetProducts.length > 0 ? gadgetProducts : [
-          {
-            id: 'g1',
-            title: 'Smart Home Security Camera',
-            price: 129.99,
-            rating: { rate: 4.8, count: 156 },
-            image: 'https://images.unsplash.com/photo-1558002038-1055907df827',
-            category: 'electronics'
-          },
-          {
-            id: 'g2',
-            title: 'Wireless Noise-Canceling Earbuds',
-            price: 199.99,
-            rating: { rate: 4.7, count: 189 },
-            image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df',
-            category: 'electronics'
-          },
-          {
-            id: 'w1',
-            title: 'Premium Smartwatch with Health Tracking',
-            price: 299.99,
-            rating: { rate: 4.9, count: 245 },
-            image: 'https://images.unsplash.com/photo-1544117519-31a4b719223d',
-            category: 'electronics'
-          },
-          {
-            id: 'w2',
-            title: 'Luxury Automatic Watch - Gold Edition',
-            price: 599.99,
-            rating: { rate: 4.8, count: 178 },
-            image: 'https://images.unsplash.com/photo-1547996160-81dfa63595aa',
-            category: 'watches'
-          },
-          {
-            id: 'w3',
-            title: 'Sports Smartwatch with GPS',
-            price: 199.99,
-            rating: { rate: 4.7, count: 212 },
-            image: 'https://images.unsplash.com/photo-1617043786394-f977fa12eddf',
-            category: 'electronics'
-          },
-          {
-            id: 'w4',
-            title: 'Classic Leather Strap Watch',
-            price: 149.99,
-            rating: { rate: 4.6, count: 167 },
-            image: 'https://images.unsplash.com/photo-1539874754764-5a96559165b0',
-            category: 'watches'
-          },
-          {
-            id: 'w5',
-            title: 'Kids Smart Watch with Tracking',
-            price: 79.99,
-            rating: { rate: 4.5, count: 143 },
-            image: 'https://images.unsplash.com/photo-1600948836101-f9ffda59d250',
-            category: 'electronics'
-          },
-          {
-            id: 'g8',
-            title: 'Mini Drone with HD Camera',
-            price: 299.99,
-            rating: { rate: 4.8, count: 198 },
-            image: 'https://images.unsplash.com/photo-1579829366248-204fe8413f31',
-            category: 'electronics'
-          },
-          {
-            id: 'w6',
-            title: 'Minimalist Steel Watch - Silver',
-            price: 179.99,
-            rating: { rate: 4.6, count: 156 },
-            image: 'https://images.unsplash.com/photo-1522312346375-d1a52e2b99b3',
-            category: 'watches'
-          },
-          {
-            id: 'w7',
-            title: 'Fitness Tracking Smart Watch',
-            price: 159.99,
-            rating: { rate: 4.7, count: 189 },
-            image: 'https://images.unsplash.com/photo-1579586337278-3befd40fd17a',
-            category: 'electronics'
-          },
-          {
-            id: 'w8',
-            title: 'Luxury Chronograph Watch',
-            price: 449.99,
-            rating: { rate: 4.9, count: 134 },
-            image: 'https://images.unsplash.com/photo-1623998022290-a74f8cc36563',
-            category: 'watches'
-          },
-          {
-            id: 'g6',
-            title: 'Bluetooth Speaker with RGB Lights',
-            price: 79.99,
-            rating: { rate: 4.6, count: 167 },
-            image: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1',
-            category: 'electronics'
-          }
-        ]);
+        setProducts(gadgetProducts);
       } catch (err) {
         setError('Failed to load gadget products. Please try again later.');
         console.error('Error fetching products:', err);
