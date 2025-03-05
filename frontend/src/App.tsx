@@ -8,6 +8,7 @@ import HomePage from './pages/HomePage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import CategoryProductsPage from './pages/CategoryProductsPage';
 import TodaysDealsPage from './pages/TodaysDealsPage';
+import SearchResultsPage from './pages/SearchResultsPage';
 
 const App: React.FC = () => {
   return (
@@ -20,6 +21,7 @@ const App: React.FC = () => {
             <Route path="/product/:id" element={<ProductDetailPage />} />
             <Route path="/category/:category" element={<CategoryProductsPage />} />
             <Route path="/deals" element={<TodaysDealsPage />} />
+            <Route path="/search" element={<SearchResultsPage />} />
           </Routes>
         </MainLayout>
       </Router>

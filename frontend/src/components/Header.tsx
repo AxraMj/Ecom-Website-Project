@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -12,6 +12,10 @@ import {
   MenuItem,
   styled,
   Stack,
+  Select,
+  Paper,
+  ClickAwayListener,
+  Popper,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -27,14 +31,14 @@ import {
   LibraryBooks as BooksIcon,
   CardGiftcard as DealsIcon,
 } from '@mui/icons-material';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
-const Search = styled('div')(({ theme }) => ({
+const Search = styled('form')(({ theme }) => ({
   position: 'relative',
   borderRadius: theme.shape.borderRadius,
   backgroundColor: 'white',
-  marginRight: theme.spacing(2),
-  marginLeft: 0,
+  display: 'flex',
   width: '100%',
   [theme.breakpoints.up('sm')]: {
     marginLeft: theme.spacing(3),
@@ -42,6 +46,29 @@ const Search = styled('div')(({ theme }) => ({
   },
   '&:hover': {
     backgroundColor: '#f8f8f8',
+  },
+  border: '1px solid #ddd',
+  '&:focus-within': {
+    border: '1px solid',
+    borderColor: theme.palette.secondary.main,
+  },
+}));
+
+const CategorySelect = styled(Select)(({ theme }) => ({
+  backgroundColor: '#f3f3f3',
+  borderRadius: `${theme.shape.borderRadius}px 0 0 ${theme.shape.borderRadius}px`,
+  borderRight: '1px solid #ddd',
+  '& .MuiSelect-select': {
+    padding: '8px 32px 8px 12px',
+    fontSize: '0.875rem',
+    color: '#555',
+    minWidth: '120px',
+  },
+  '&:hover': {
+    backgroundColor: '#e9e9e9',
+  },
+  '& .MuiOutlinedInput-notchedOutline': {
+    border: 'none',
   },
 }));
 
@@ -51,11 +78,16 @@ const SearchIconWrapper = styled('div')(({ theme }) => ({
   position: 'absolute',
   right: 0,
   top: 0,
-  pointerEvents: 'none',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  color: theme.palette.secondary.main,
+  color: 'white',
+  backgroundColor: theme.palette.secondary.main,
+  borderRadius: `0 ${theme.shape.borderRadius}px ${theme.shape.borderRadius}px 0`,
+  cursor: 'pointer',
+  '&:hover': {
+    backgroundColor: theme.palette.secondary.dark,
+  },
 }));
 
 const StyledInputBase = styled(InputBase)(({ theme }) => ({
@@ -107,9 +139,54 @@ const LogoText = styled(Typography)(({ theme }) => ({
   },
 }));
 
+interface SearchSuggestion {
+  id: string;
+  title: string;
+  category: string;
+  image: string;
+  price: number;
+}
+
+const SuggestionsPopper = styled(Popper)(({ theme }) => ({
+  zIndex: theme.zIndex.appBar + 1,
+  width: '100%',
+  maxWidth: 800,
+  marginTop: '4px',
+}));
+
+const SuggestionsPaper = styled(Paper)(({ theme }) => ({
+  maxHeight: '400px',
+  overflowY: 'auto',
+  boxShadow: theme.shadows[3],
+}));
+
+const SuggestionItem = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(1, 2),
+  display: 'flex',
+  alignItems: 'center',
+  cursor: 'pointer',
+  '&:hover': {
+    backgroundColor: theme.palette.action.hover,
+  },
+}));
+
+const SuggestionImage = styled('img')({
+  width: '40px',
+  height: '40px',
+  objectFit: 'contain',
+  marginRight: '12px',
+});
+
 const Header: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [searchCategory, setSearchCategory] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
   const isMenuOpen = Boolean(anchorEl);
+  const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchRef = useRef<HTMLFormElement>(null);
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -117,6 +194,77 @@ const Header: React.FC = () => {
 
   const handleMenuClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleSearchSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (searchQuery.trim()) {
+      if (searchCategory === 'all') {
+        navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+      } else {
+        navigate(`/category/${searchCategory}?q=${encodeURIComponent(searchQuery)}`);
+      }
+    }
+  };
+
+  const fetchSuggestions = async (query: string) => {
+    if (!query.trim()) {
+      setSuggestions([]);
+      return;
+    }
+
+    try {
+      const response = await axios.get('https://fakestoreapi.com/products');
+      const products = response.data;
+      const filtered = products
+        .filter((product: SearchSuggestion) =>
+          product.title.toLowerCase().includes(query.toLowerCase()) ||
+          product.category.toLowerCase().includes(query.toLowerCase())
+        )
+        .slice(0, 6); // Limit to 6 suggestions
+
+      if (filtered.length === 0 && query.length > 2) {
+        // Add fallback suggestions if no results found
+        filtered.push({
+          id: 'f1',
+          title: `${query} - Premium Headphones`,
+          category: 'electronics',
+          image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e',
+          price: 199.99,
+        });
+      }
+
+      setSuggestions(filtered);
+    } catch (error) {
+      console.error('Error fetching suggestions:', error);
+    }
+  };
+
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    setShowSuggestions(true);
+
+    // Clear existing timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+
+    // Set new timeout for debouncing
+    const timeout = setTimeout(() => {
+      fetchSuggestions(value);
+    }, 300);
+
+    setSearchTimeout(timeout);
+  };
+
+  const handleSuggestionClick = (productId: string) => {
+    setShowSuggestions(false);
+    navigate(`/product/${productId}`);
+  };
+
+  const handleClickAway = () => {
+    setShowSuggestions(false);
   };
 
   const categories = [
@@ -128,6 +276,17 @@ const Header: React.FC = () => {
     { name: 'Beauty', icon: <BeautyIcon />, path: '/category/beauty' },
     { name: 'Books', icon: <BooksIcon />, path: '/category/books' },
     { name: "Today's Deals", icon: <DealsIcon />, path: '/deals' },
+  ];
+
+  const searchCategories = [
+    { value: 'all', label: 'All Categories' },
+    { value: 'electronics', label: 'Electronics' },
+    { value: 'fashion', label: 'Fashion' },
+    { value: 'furniture', label: 'Home & Furniture' },
+    { value: 'grocery', label: 'Grocery' },
+    { value: 'gaming', label: 'Gaming' },
+    { value: 'beauty', label: 'Beauty' },
+    { value: 'books', label: 'Books' },
   ];
 
   return (
@@ -154,14 +313,69 @@ const Header: React.FC = () => {
           </NavButton>
 
           {/* Search Bar */}
-          <Search sx={{ flexGrow: 1, maxWidth: 800 }}>
+          <Search
+            ref={searchRef}
+            onSubmit={handleSearchSubmit}
+            sx={{ flexGrow: 1, maxWidth: 800, display: 'flex', position: 'relative' }}
+          >
+            <CategorySelect
+              value={searchCategory}
+              onChange={(e) => setSearchCategory(e.target.value as string)}
+              variant="outlined"
+              size="small"
+            >
+              {searchCategories.map((category) => (
+                <MenuItem key={category.value} value={category.value}>
+                  {category.label}
+                </MenuItem>
+              ))}
+            </CategorySelect>
             <StyledInputBase
               placeholder="Search products…"
               inputProps={{ 'aria-label': 'search' }}
+              value={searchQuery}
+              onChange={handleSearchInputChange}
+              onFocus={() => setShowSuggestions(true)}
+              sx={{ flex: 1 }}
             />
-            <SearchIconWrapper>
+            <SearchIconWrapper onClick={handleSearchSubmit}>
               <SearchIcon />
             </SearchIconWrapper>
+
+            {/* Search Suggestions */}
+            <ClickAwayListener onClickAway={handleClickAway}>
+              <SuggestionsPopper
+                open={showSuggestions && suggestions.length > 0}
+                anchorEl={searchRef.current}
+                placement="bottom-start"
+              >
+                <SuggestionsPaper>
+                  {suggestions.map((suggestion) => (
+                    <SuggestionItem
+                      key={suggestion.id}
+                      onClick={() => handleSuggestionClick(suggestion.id)}
+                    >
+                      <SuggestionImage src={suggestion.image} alt={suggestion.title} />
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="body1" noWrap>
+                          {suggestion.title}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          in {suggestion.category}
+                        </Typography>
+                      </Box>
+                      <Typography 
+                        variant="body2" 
+                        color="secondary" 
+                        sx={{ fontWeight: 600, ml: 2 }}
+                      >
+                        ${suggestion.price?.toFixed(2)}
+                      </Typography>
+                    </SuggestionItem>
+                  ))}
+                </SuggestionsPaper>
+              </SuggestionsPopper>
+            </ClickAwayListener>
           </Search>
 
           {/* Right Navigation */}
