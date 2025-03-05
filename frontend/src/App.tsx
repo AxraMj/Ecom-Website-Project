@@ -7,6 +7,7 @@ import MainLayout from './layouts/MainLayout';
 import HomePage from './pages/HomePage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import CategoryProductsPage from './pages/CategoryProductsPage';
+import TodaysDealsPage from './pages/TodaysDealsPage';
 
 const App: React.FC = () => {
   return (
@@ -18,6 +19,7 @@ const App: React.FC = () => {
             <Route path="/" element={<HomePage />} />
             <Route path="/product/:id" element={<ProductDetailPage />} />
             <Route path="/category/:category" element={<CategoryProductsPage />} />
+            <Route path="/deals" element={<TodaysDealsPage />} />
           </Routes>
         </MainLayout>
       </Router>
