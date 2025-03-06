@@ -14,7 +14,8 @@ import {
   TextField,
   CircularProgress,
   Alert,
-  Divider
+  Divider,
+  DialogContentText
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
@@ -54,6 +55,9 @@ const OrdersPage: React.FC = () => {
   const [returnDialogOpen, setReturnDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [returnReason, setReturnReason] = useState('');
+  const [openReturnDialog, setOpenReturnDialog] = useState(false);
+  const [openCancelDialog, setOpenCancelDialog] = useState(false);
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -98,6 +102,57 @@ const OrdersPage: React.FC = () => {
     }
   };
 
+  const handleCancelOrder = (order: Order) => {
+    setSelectedOrder(order);
+    setOpenCancelDialog(true);
+  };
+
+  const submitCancelRequest = async () => {
+    if (!selectedOrder) return;
+
+    try {
+      const token = localStorage.getItem('userToken');
+      if (!token) {
+        setError('Authentication token not found. Please log in again.');
+        return;
+      }
+
+      const response = await axios.post(
+        `http://localhost:5000/api/orders/${selectedOrder._id}/cancel`,
+        {},
+        {
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.data.success) {
+        setActionSuccess('Order cancelled successfully');
+        fetchOrders(); // Refresh orders list
+      }
+    } catch (error: any) {
+      console.error('Cancel order error:', error);
+      setError(error.response?.data?.message || 'Error cancelling order');
+    } finally {
+      setOpenCancelDialog(false);
+      setSelectedOrder(null);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    const colors: { [key: string]: string } = {
+      'pending': '#f57c00',      // Orange
+      'processing': '#1976d2',   // Blue
+      'shipped': '#7b1fa2',      // Purple
+      'delivered': '#2e7d32',    // Green
+      'cancelled': '#d32f2f',    // Red
+      'return-requested': '#ed6c02' // Deep Orange
+    };
+    return colors[status] || '#757575'; // Grey as default
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
@@ -112,7 +167,13 @@ const OrdersPage: React.FC = () => {
         Your Orders
       </Typography>
 
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {actionSuccess && (
+        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setActionSuccess(null)}>
+          {actionSuccess}
+        </Alert>
+      )}
+
+      {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
 
       {orders.length === 0 ? (
         <Paper sx={{ p: 3, textAlign: 'center' }}>
@@ -173,15 +234,27 @@ const OrdersPage: React.FC = () => {
                   <Typography variant="h6">
                     Total: ${order.totalAmount.toFixed(2)}
                   </Typography>
-                  {order.status === 'delivered' && (
-                    <Button
-                      variant="outlined"
-                      color="primary"
-                      onClick={() => handleReturnRequest(order)}
-                    >
-                      Return Order
-                    </Button>
-                  )}
+                  <Box>
+                    {['pending', 'processing'].includes(order.status) && (
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        onClick={() => handleCancelOrder(order)}
+                        sx={{ mr: 1 }}
+                      >
+                        Cancel Order
+                      </Button>
+                    )}
+                    {order.status === 'delivered' && (
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        onClick={() => handleReturnRequest(order)}
+                      >
+                        Return Order
+                      </Button>
+                    )}
+                  </Box>
                 </Box>
               </Grid>
             </Grid>
@@ -207,6 +280,24 @@ const OrdersPage: React.FC = () => {
           <Button onClick={() => setReturnDialogOpen(false)}>Cancel</Button>
           <Button onClick={submitReturnRequest} variant="contained" color="primary">
             Submit Return Request
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={openCancelDialog}
+        onClose={() => setOpenCancelDialog(false)}
+      >
+        <DialogTitle>Cancel Order</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to cancel this order? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenCancelDialog(false)}>No, Keep Order</Button>
+          <Button onClick={submitCancelRequest} color="error" variant="contained">
+            Yes, Cancel Order
           </Button>
         </DialogActions>
       </Dialog>

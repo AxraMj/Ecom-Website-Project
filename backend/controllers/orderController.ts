@@ -133,4 +133,48 @@ export const submitReturn = async (req: AuthRequest, res: Response) => {
       message: 'Error submitting return request'
     });
   }
+};
+
+// Cancel order
+export const cancelOrder = async (req: AuthRequest, res: Response) => {
+  try {
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    // Check if the order belongs to the user
+    if (order.userId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to cancel this order'
+      });
+    }
+
+    // Check if order is eligible for cancellation (pending or processing status)
+    if (!['pending', 'processing'].includes(order.status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Order cannot be cancelled at this stage'
+      });
+    }
+
+    // Update order status to 'cancelled'
+    order.status = 'cancelled';
+    await order.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Order cancelled successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error cancelling order'
+    });
+  }
 }; 
