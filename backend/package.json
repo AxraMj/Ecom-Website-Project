@@ -9,7 +9,8 @@
     "dev": "nodemon -x ts-node server.ts",
     "build": "tsc",
     "seed": "ts-node -r tsconfig-paths/register scripts/seedProducts.ts",
-    "watch": "tsc -w"
+    "watch": "tsc -w",
+    "create-admin": "ts-node scripts/createAdmin.ts"
   },
   "keywords": [],
   "author": "",
