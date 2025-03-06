@@ -16,6 +16,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import ProfilePage from './pages/ProfilePage';
 import CartPage from './pages/CartPage';
+import CheckoutPage from './pages/CheckoutPage';
 
 const App: React.FC = () => {
   return (
@@ -61,6 +62,14 @@ const App: React.FC = () => {
                   } 
                 />
                 <Route path="/cart" element={<CartPage />} />
+                <Route 
+                  path="/checkout" 
+                  element={
+                    <ProtectedRoute>
+                      <CheckoutPage />
+                    </ProtectedRoute>
+                  } 
+                />
               </Routes>
             </MainLayout>
           </Router>

@@ -185,6 +185,7 @@ const CartPage: React.FC = () => {
                 fullWidth
                 size="large"
                 sx={{ mt: 2 }}
+                onClick={() => navigate('/checkout')}
               >
                 Proceed to Checkout
               </Button>
