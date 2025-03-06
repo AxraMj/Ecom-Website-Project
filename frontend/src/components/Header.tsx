@@ -33,6 +33,8 @@ import {
 } from '@mui/icons-material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
+import AuthDialog from './auth/AuthDialog';
 
 const Search = styled('form')(({ theme }) => ({
   position: 'relative',
@@ -106,9 +108,16 @@ const NavButton = styled(Button)(({ theme }) => ({
   color: 'white',
   textAlign: 'left',
   padding: theme.spacing(0.5, 1),
+  cursor: 'pointer',
   '&:hover': {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
+  '& .MuiTypography-root': {
+    textAlign: 'left',
+    width: '100%',
+  },
+  minWidth: 'auto',
+  textTransform: 'none',
 })) as typeof Button;
 
 const CategoryButton = styled(Button)(({ theme }) => ({
@@ -123,12 +132,12 @@ const CategoryButton = styled(Button)(({ theme }) => ({
   },
 })) as typeof Button;
 
-const StyledLink = styled(RouterLink)(({ theme }) => ({
+const StyledLink = styled(RouterLink)({
   textDecoration: 'none',
   color: 'inherit',
   display: 'flex',
   alignItems: 'center',
-}));
+});
 
 const LogoText = styled(Typography)(({ theme }) => ({
   fontWeight: 700,
@@ -187,6 +196,8 @@ const Header: React.FC = () => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchRef = useRef<HTMLFormElement>(null);
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const { user, logout, isAuthenticated } = useAuth();
 
   const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -221,10 +232,9 @@ const Header: React.FC = () => {
           product.title.toLowerCase().includes(query.toLowerCase()) ||
           product.category.toLowerCase().includes(query.toLowerCase())
         )
-        .slice(0, 6); // Limit to 6 suggestions
+        .slice(0, 6);
 
       if (filtered.length === 0 && query.length > 2) {
-        // Add fallback suggestions if no results found
         filtered.push({
           id: 'f1',
           title: `${query} - Premium Headphones`,
@@ -245,12 +255,10 @@ const Header: React.FC = () => {
     setSearchQuery(value);
     setShowSuggestions(true);
 
-    // Clear existing timeout
     if (searchTimeout) {
       clearTimeout(searchTimeout);
     }
 
-    // Set new timeout for debouncing
     const timeout = setTimeout(() => {
       fetchSuggestions(value);
     }, 300);
@@ -288,6 +296,49 @@ const Header: React.FC = () => {
     { value: 'beauty', label: 'Beauty' },
     { value: 'books', label: 'Books' },
   ];
+
+  const renderMenu = (
+    <Menu
+      anchorEl={anchorEl}
+      anchorOrigin={{
+        vertical: 'bottom',
+        horizontal: 'right',
+      }}
+      keepMounted
+      transformOrigin={{
+        vertical: 'top',
+        horizontal: 'right',
+      }}
+      open={isMenuOpen}
+      onClose={handleMenuClose}
+    >
+      {isAuthenticated ? (
+        <>
+          <MenuItem onClick={() => {
+            navigate('/profile');
+            handleMenuClose();
+          }}>Profile</MenuItem>
+          <MenuItem onClick={() => {
+            navigate('/orders');
+            handleMenuClose();
+          }}>My Orders</MenuItem>
+          <MenuItem onClick={() => {
+            navigate('/wishlist');
+            handleMenuClose();
+          }}>Wishlist</MenuItem>
+          <MenuItem onClick={() => {
+            logout();
+            handleMenuClose();
+          }}>Logout</MenuItem>
+        </>
+      ) : (
+        <MenuItem onClick={() => {
+          setAuthDialogOpen(true);
+          handleMenuClose();
+        }}>Login/Register</MenuItem>
+      )}
+    </Menu>
+  );
 
   return (
     <>
@@ -383,7 +434,7 @@ const Header: React.FC = () => {
             <NavButton onClick={handleProfileMenuOpen}>
               <Box>
                 <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                  Hello, Sign in
+                  {isAuthenticated ? `Hello, ${user?.name}` : 'Hello, Sign in'}
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
                   Account & Lists
@@ -455,23 +506,11 @@ const Header: React.FC = () => {
         </Toolbar>
       </AppBar>
 
-      <Menu
-        anchorEl={anchorEl}
-        id="profile-menu"
-        keepMounted
-        open={isMenuOpen}
-        onClose={handleMenuClose}
-      >
-        <MenuItem onClick={handleMenuClose} component={RouterLink} to="/login">
-          Login
-        </MenuItem>
-        <MenuItem onClick={handleMenuClose} component={RouterLink} to="/register">
-          Register
-        </MenuItem>
-        <MenuItem onClick={handleMenuClose} component={RouterLink} to="/profile">
-          Profile
-        </MenuItem>
-      </Menu>
+      {renderMenu}
+      <AuthDialog 
+        open={authDialogOpen} 
+        onClose={() => setAuthDialogOpen(false)} 
+      />
     </>
   );
 };

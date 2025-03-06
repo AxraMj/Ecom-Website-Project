@@ -1,6 +1,37 @@
 # E-commerce Website (MERN Stack)
 
-A full-featured e-commerce platform built with MERN (MongoDB, Express.js, React.js, Node.js) stack, similar to Amazon.
+A full-featured e-commerce platform built with MERN (MongoDB, Express.js, React.js, Node.js) stack and TypeScript.
+
+## Features Implemented
+
+### Backend
+- ✅ MongoDB integration with Mongoose
+- ✅ Express.js server with TypeScript
+- ✅ Product management system
+- ✅ Admin authentication system
+- ✅ Product API endpoints (CRUD operations)
+- ✅ Category management
+- ✅ Search functionality
+- ✅ Featured products system
+- ✅ Product rating system
+- ✅ Hybrid product system (database + external API)
+
+### Frontend
+- ✅ React with TypeScript
+- ✅ Material-UI integration
+- ✅ Responsive design
+- ✅ Product listing
+- ✅ Product details page
+- ✅ Admin dashboard
+- ✅ Admin login system
+- ✅ Product management interface
+- ✅ Category filtering
+- ✅ Featured products showcase
+- ✅ Today's deals page
+- ✅ Search functionality
+- ✅ Product recommendations
+
+## Project Structure
 
 ## Features
 
@@ -221,3 +252,136 @@ npm run seed
      "email": "admin@example.com",
      "password": "admin123"
    }
+
+
+## Tech Stack
+
+### Backend
+- Node.js
+- Express.js
+- TypeScript
+- MongoDB with Mongoose
+- JWT Authentication
+- CORS
+- dotenv
+
+### Frontend
+- React.js
+- TypeScript
+- Material-UI (MUI)
+- React Router DOM
+- Axios
+- React-Toastify
+
+## API Endpoints
+
+### Admin Routes
+- `POST /api/admin/login` - Admin login
+- `GET /api/admin/check` - Verify admin authentication
+
+### Product Routes
+- `GET /api/products` - Get all products
+- `GET /api/products/:id` - Get single product
+- `POST /api/products` - Create new product (admin only)
+- `PUT /api/products/:id` - Update product (admin only)
+- `DELETE /api/products/:id` - Delete product (admin only)
+- `GET /api/products/category/:category` - Get products by category
+- `GET /api/featured-products` - Get featured products
+
+## Getting Started
+
+### Prerequisites
+- Node.js (v14 or higher)
+- MongoDB
+- npm or yarn
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone <repository-url>
+```
+
+2. Install backend dependencies:
+```bash
+cd backend
+npm install
+```
+
+3. Install frontend dependencies:
+```bash
+cd frontend
+npm install
+```
+
+4. Create a .env file in the backend directory:
+```env
+PORT=5000
+MONGODB_URI=mongodb://localhost:27017/ecommerce
+JWT_SECRET=your_jwt_secret_key_here
+NODE_ENV=development
+```
+
+5. Start the development servers:
+
+Backend:
+```bash
+cd backend
+npm run dev
+```
+
+Frontend:
+```bash
+cd frontend
+npm start
+```
+
+6. Create admin account:
+```bash
+cd backend
+npm run create-admin
+```
+
+Default admin credentials:
+- Email: admin@example.com
+- Password: admin123
+
+## Current Features
+
+### Admin Panel
+- Secure admin login
+- Product management (Add, Edit, Delete)
+- Featured products management
+- Stock management
+- Category management
+
+### Shopping Interface
+- Homepage with featured products
+- Product categories
+- Product search
+- Product details with recommendations
+- Today's deals section
+- Rating display
+- Stock status
+- Wishlist functionality (UI only)
+- Size selection for applicable products
+
+## Next Steps
+- [ ] Shopping cart implementation
+- [ ] User authentication
+- [ ] Order management system
+- [ ] Payment integration
+- [ ] User profile management
+- [ ] Review system implementation
+- [ ] Wishlist backend integration
+- [ ] Order tracking
+- [ ] Email notifications
+- [ ] Admin analytics dashboard
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
