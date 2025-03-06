@@ -8,6 +8,7 @@ import Admin from './models/Admin';
 import adminRoutes from './routes/adminRoutes';
 import userRoutes from './routes/userRoutes';
 import { protect } from './middleware/authMiddleware';
+import cartRoutes from './routes/cartRoutes';
 
 dotenv.config();
 
@@ -23,6 +24,7 @@ app.use('/api/admin', adminRoutes);
 
 // Mount routes
 app.use('/api/auth', userRoutes);
+app.use('/api/cart', cartRoutes);
 
 // Protected routes example
 app.use('/api/protected', protect, (req, res) => {

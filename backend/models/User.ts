@@ -10,8 +10,12 @@ export interface IUser {
   updatedAt: Date;
 }
 
-export interface IUserDocument extends IUser, Document {
+export interface IUserDocument extends Document {
   _id: Schema.Types.ObjectId;
+  name: string;
+  email: string;
+  password: string;
+  role: 'user' | 'admin';
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 

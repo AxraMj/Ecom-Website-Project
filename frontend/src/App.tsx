@@ -15,6 +15,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import ProfilePage from './pages/ProfilePage';
+import CartPage from './pages/CartPage';
 
 const App: React.FC = () => {
   return (
@@ -59,6 +60,7 @@ const App: React.FC = () => {
                     </ProtectedRoute>
                   } 
                 />
+                <Route path="/cart" element={<CartPage />} />
               </Routes>
             </MainLayout>
           </Router>

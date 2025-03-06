@@ -307,6 +307,14 @@ const ProductDetailPage: React.FC = () => {
     }
 
     if (product) {
+      console.log('Adding product to cart:', {  // Debug log
+        id: product.id,
+        title: product.title,
+        price: product.price,
+        image: product.image,
+        quantity: 1
+      });
+      
       addToCart({
         id: product.id,
         title: product.title,

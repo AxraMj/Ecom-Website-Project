@@ -34,6 +34,8 @@ import {
   LibraryBooks as BooksIcon,
   CardGiftcard as DealsIcon,
   Delete as DeleteIcon,
+  Remove,
+  Add,
 } from '@mui/icons-material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -191,6 +193,32 @@ const SuggestionImage = styled('img')({
   marginRight: '12px',
 });
 
+const CartMenu = styled(Menu)(({ theme }) => ({
+  '& .MuiPaper-root': {
+    width: '400px',
+    maxHeight: '80vh',
+  },
+}));
+
+const CartItemWrapper = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(2),
+  borderBottom: `1px solid ${theme.palette.divider}`,
+  '&:last-child': {
+    borderBottom: 'none',
+  },
+}));
+
+const CartItemImage = styled('img')({
+  width: '60px',
+  height: '60px',
+  objectFit: 'contain',
+  marginRight: '16px',
+});
+
+const CartItemDetails = styled(Box)({
+  flex: 1,
+});
+
 const Header: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [searchCategory, setSearchCategory] = useState('all');
@@ -203,8 +231,9 @@ const Header: React.FC = () => {
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const { user, logout, isAuthenticated } = useAuth();
-  const { items, removeFromCart, totalItems, totalPrice } = useCart();
+  const { items, totalPrice, removeFromCart, updateQuantity } = useCart();
   const [cartAnchorEl, setCartAnchorEl] = useState<null | HTMLElement>(null);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
 
   const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -304,8 +333,12 @@ const Header: React.FC = () => {
     { value: 'books', label: 'Books' },
   ];
 
-  const handleCartClick = (event: React.MouseEvent<HTMLElement>) => {
-    setCartAnchorEl(event.currentTarget);
+  const handleCartClick = () => {
+    if (!isAuthenticated) {
+      setShowAuthDialog(true);
+    } else {
+      navigate('/cart');
+    }
   };
 
   const handleCartClose = () => {
@@ -360,6 +393,78 @@ const Header: React.FC = () => {
         }}>Login/Register</MenuItem>
       )}
     </Menu>
+  );
+
+  const renderCartMenu = (
+    <CartMenu
+      anchorEl={cartAnchorEl}
+      open={Boolean(cartAnchorEl)}
+      onClose={handleCartClose}
+    >
+      {items.length === 0 ? (
+        <Box sx={{ p: 2, textAlign: 'center' }}>
+          <Typography>Your cart is empty</Typography>
+        </Box>
+      ) : (
+        <>
+          <Box sx={{ maxHeight: '60vh', overflow: 'auto' }}>
+            {items.map((item) => (
+              <CartItemWrapper key={item.id}>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+                  <CartItemImage src={item.image} alt={item.title} />
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="subtitle2" noWrap>
+                      {item.title}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      ${item.price.toFixed(2)} x {item.quantity}
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                      <IconButton
+                        size="small"
+                        onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                      >
+                        <Remove fontSize="small" />
+                      </IconButton>
+                      <Typography sx={{ mx: 1 }}>{item.quantity}</Typography>
+                      <IconButton
+                        size="small"
+                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      >
+                        <Add fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={() => removeFromCart(item.id)}
+                        sx={{ ml: 'auto' }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  </Box>
+                </Box>
+              </CartItemWrapper>
+            ))}
+          </Box>
+          <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
+            <Typography variant="subtitle1" sx={{ mb: 2 }}>
+              Total: ${totalPrice.toFixed(2)}
+            </Typography>
+            <Button
+              fullWidth
+              variant="contained"
+              color="secondary"
+              onClick={() => {
+                handleCartClose();
+                navigate('/checkout');
+              }}
+            >
+              Checkout
+            </Button>
+          </Box>
+        </>
+      )}
+    </CartMenu>
   );
 
   return (
@@ -479,7 +584,7 @@ const Header: React.FC = () => {
               component={RouterLink}
               to="/cart"
               startIcon={
-                <Badge badgeContent={totalItems} color="secondary">
+                <Badge badgeContent={items.length} color="secondary">
                   <ShoppingCartIcon />
                 </Badge>
               }
@@ -534,69 +639,7 @@ const Header: React.FC = () => {
         onClose={() => setAuthDialogOpen(false)} 
       />
 
-      <Menu
-        anchorEl={cartAnchorEl}
-        open={Boolean(cartAnchorEl)}
-        onClose={handleCartClose}
-        PaperProps={{
-          sx: { width: 320, maxHeight: 400 },
-        }}
-      >
-        <Box sx={{ p: 2 }}>
-          <Typography variant="h6" gutterBottom>
-            Shopping Cart
-          </Typography>
-          {items.length === 0 ? (
-            <Typography color="text.secondary">Your cart is empty</Typography>
-          ) : (
-            <>
-              {items.map((item) => (
-                <Box key={item.id} sx={{ mb: 2 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      style={{ width: 60, height: 60, objectFit: 'contain' }}
-                    />
-                    <Box sx={{ flexGrow: 1 }}>
-                      <Typography variant="subtitle2" noWrap>
-                        {item.title}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        ${item.price.toFixed(2)} x {item.quantity}
-                      </Typography>
-                    </Box>
-                    <IconButton
-                      size="small"
-                      onClick={() => removeFromCart(item.id)}
-                      color="error"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Box>
-                </Box>
-              ))}
-              <Divider sx={{ my: 2 }} />
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="subtitle1">Total:</Typography>
-                <Typography variant="subtitle1" fontWeight="bold">
-                  ${totalPrice.toFixed(2)}
-                </Typography>
-              </Box>
-              <Button
-                variant="contained"
-                fullWidth
-                onClick={() => {
-                  handleCartClose();
-                  navigate('/checkout');
-                }}
-              >
-                Proceed to Checkout
-              </Button>
-            </>
-          )}
-        </Box>
-      </Menu>
+      {renderCartMenu}
     </>
   );
 };
