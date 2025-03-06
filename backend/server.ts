@@ -4,6 +4,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import axios from 'axios';
 import Product from './models/Product';
+import Admin from './models/Admin';
+import adminRoutes from './routes/adminRoutes';
 
 dotenv.config();
 
@@ -14,11 +16,11 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// Mount admin routes first
+app.use('/api/admin', adminRoutes);
+
 // Connect to MongoDB
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/ecommerce';
-mongoose.connect(MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch((err) => console.error('MongoDB connection error:', err));
 
 // Helper function to map frontend categories to our categories
 function mapFrontendCategory(category: string): string {
@@ -275,6 +277,31 @@ app.delete('/api/products/:id', async (req, res) => {
     res.status(500).json({ message: 'Error deleting product' });
   }
 });
+
+// Create initial admin account if it doesn't exist
+const createInitialAdmin = async () => {
+  try {
+    const adminExists = await Admin.findOne({ email: 'admin@example.com' });
+    
+    if (!adminExists) {
+      await Admin.create({
+        email: 'admin@example.com',
+        password: 'admin123' // This will be hashed automatically
+      });
+      console.log('Initial admin account created');
+    }
+  } catch (error) {
+    console.error('Error creating initial admin:', error);
+  }
+};
+
+// Connect to MongoDB
+mongoose.connect(MONGODB_URI)
+  .then(() => {
+    console.log('Connected to MongoDB');
+    createInitialAdmin();
+  })
+  .catch((err) => console.error('MongoDB connection error:', err));
 
 // Start server
 app.listen(PORT, () => {

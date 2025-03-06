@@ -215,3 +215,9 @@ Next steps:
 - Search and filtering features 
 
 npm run seed
+
+   POST http://localhost:5000/api/admin/login
+   {
+     "email": "admin@example.com",
+     "password": "admin123"
+   }
