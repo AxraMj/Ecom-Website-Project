@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Container, Typography, Card, CardMedia, CardContent, CardActions, Button, Rating, Grid, CircularProgress, Alert } from '@mui/material';
+import React, { useState, useEffect, useRef } from 'react';
+import { Box, Container, Typography, Card, CardMedia, CardContent, CardActions, Button, Rating, Grid, CircularProgress, Alert, IconButton } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { ChevronLeft, ChevronRight } from '@mui/icons-material';
+import { useCart } from '../contexts/CartContext';
 
 interface Product {
   id: string;
@@ -38,10 +40,11 @@ const PriceTypography = styled(Typography)({
 });
 
 const Gadgets: React.FC = () => {
-  const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const { addToCart } = useCart();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -71,6 +74,17 @@ const Gadgets: React.FC = () => {
 
   const handleProductClick = (productId: string) => {
     navigate(`/product/${productId}`);
+  };
+
+  const handleAddToCart = (e: React.MouseEvent, product: Product) => {
+    e.stopPropagation();
+    addToCart({
+      id: product.id,
+      title: product.title,
+      price: product.price,
+      image: product.image,
+      quantity: 1
+    });
   };
 
   if (loading) {
@@ -164,10 +178,7 @@ const Gadgets: React.FC = () => {
                         bgcolor: '#1b5e20',
                       },
                     }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // Add to cart logic here
-                    }}
+                    onClick={(e) => handleAddToCart(e, product)}
                   >
                     Add to Cart
                   </Button>

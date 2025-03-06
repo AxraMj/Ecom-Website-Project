@@ -4,6 +4,7 @@ import { styled } from '@mui/material/styles';
 import axios from 'axios';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { useCart } from '../contexts/CartContext';
 
 interface Product {
   id: string;
@@ -86,6 +87,7 @@ const ShoesProducts: React.FC = () => {
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
   const navigate = useNavigate();
+  const { addToCart } = useCart();
 
   const handleScroll = () => {
     if (scrollContainerRef.current) {
@@ -108,6 +110,17 @@ const ShoesProducts: React.FC = () => {
 
   const handleProductClick = (productId: string) => {
     navigate(`/product/${productId}`);
+  };
+
+  const handleAddToCart = (e: React.MouseEvent, product: Product) => {
+    e.stopPropagation();
+    addToCart({
+      id: product.id,
+      title: product.title,
+      price: product.price,
+      image: product.image,
+      quantity: 1
+    });
   };
 
   useEffect(() => {

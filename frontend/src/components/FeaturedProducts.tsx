@@ -3,6 +3,7 @@ import { Box, Container, Typography, Card, CardMedia, CardContent, CardActions, 
 import { styled } from '@mui/material/styles';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useCart } from '../contexts/CartContext';
 
 interface Product {
   id: string;
@@ -57,6 +58,7 @@ const FeaturedProducts: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { addToCart } = useCart();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -78,6 +80,17 @@ const FeaturedProducts: React.FC = () => {
 
   const handleProductClick = (productId: string) => {
     navigate(`/product/${productId}`);
+  };
+
+  const handleAddToCart = (e: React.MouseEvent, product: Product) => {
+    e.stopPropagation();
+    addToCart({
+      id: product.id,
+      title: product.title,
+      price: product.price,
+      image: product.image,
+      quantity: 1
+    });
   };
 
   if (loading) {
@@ -196,12 +209,9 @@ const FeaturedProducts: React.FC = () => {
                         boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                       }
                     }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // Add to cart logic here
-                    }}
+                    onClick={(e) => handleAddToCart(e, product)}
                   >
-                    View Details
+                    Add to Cart
                   </Button>
                 </CardActions>
               </ProductCard>

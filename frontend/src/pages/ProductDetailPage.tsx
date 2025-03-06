@@ -22,6 +22,7 @@ import {
 import { styled } from '@mui/material/styles';
 import { FavoriteBorder, Favorite } from '@mui/icons-material';
 import axios from 'axios';
+import { useCart } from '../contexts/CartContext';
 
 interface Product {
   id: string;
@@ -100,6 +101,7 @@ const ProductDetailPage: React.FC = () => {
   const [selectedSize, setSelectedSize] = useState('');
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
+  const { addToCart } = useCart();
 
   const sizes = ['S', 'M', 'L', 'XL', 'XXL'];
 
@@ -292,6 +294,18 @@ const ProductDetailPage: React.FC = () => {
     setIsWishlisted(!isWishlisted);
   };
 
+  const handleAddToCart = () => {
+    if (product) {
+      addToCart({
+        id: product.id,
+        title: product.title,
+        price: product.price,
+        image: product.image,
+        quantity: 1
+      });
+    }
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
@@ -370,7 +384,7 @@ const ProductDetailPage: React.FC = () => {
                   color="secondary"
                   size="large"
                   fullWidth
-                  onClick={() => {/* Add to cart logic */}}
+                  onClick={handleAddToCart}
                 >
                   Add to Cart
                 </Button>

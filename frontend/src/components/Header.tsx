@@ -16,6 +16,9 @@ import {
   Paper,
   ClickAwayListener,
   Popper,
+  Divider,
+  TextField,
+  InputAdornment,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -30,11 +33,13 @@ import {
   Favorite as BeautyIcon,
   LibraryBooks as BooksIcon,
   CardGiftcard as DealsIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import AuthDialog from './auth/AuthDialog';
+import { useCart } from '../contexts/CartContext';
 
 const Search = styled('form')(({ theme }) => ({
   position: 'relative',
@@ -198,6 +203,8 @@ const Header: React.FC = () => {
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const { user, logout, isAuthenticated } = useAuth();
+  const { items, removeFromCart, totalItems, totalPrice } = useCart();
+  const [cartAnchorEl, setCartAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -296,6 +303,21 @@ const Header: React.FC = () => {
     { value: 'beauty', label: 'Beauty' },
     { value: 'books', label: 'Books' },
   ];
+
+  const handleCartClick = (event: React.MouseEvent<HTMLElement>) => {
+    setCartAnchorEl(event.currentTarget);
+  };
+
+  const handleCartClose = () => {
+    setCartAnchorEl(null);
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
 
   const renderMenu = (
     <Menu
@@ -457,7 +479,7 @@ const Header: React.FC = () => {
               component={RouterLink}
               to="/cart"
               startIcon={
-                <Badge badgeContent={0} color="secondary">
+                <Badge badgeContent={totalItems} color="secondary">
                   <ShoppingCartIcon />
                 </Badge>
               }
@@ -511,6 +533,70 @@ const Header: React.FC = () => {
         open={authDialogOpen} 
         onClose={() => setAuthDialogOpen(false)} 
       />
+
+      <Menu
+        anchorEl={cartAnchorEl}
+        open={Boolean(cartAnchorEl)}
+        onClose={handleCartClose}
+        PaperProps={{
+          sx: { width: 320, maxHeight: 400 },
+        }}
+      >
+        <Box sx={{ p: 2 }}>
+          <Typography variant="h6" gutterBottom>
+            Shopping Cart
+          </Typography>
+          {items.length === 0 ? (
+            <Typography color="text.secondary">Your cart is empty</Typography>
+          ) : (
+            <>
+              {items.map((item) => (
+                <Box key={item.id} sx={{ mb: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      style={{ width: 60, height: 60, objectFit: 'contain' }}
+                    />
+                    <Box sx={{ flexGrow: 1 }}>
+                      <Typography variant="subtitle2" noWrap>
+                        {item.title}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        ${item.price.toFixed(2)} x {item.quantity}
+                      </Typography>
+                    </Box>
+                    <IconButton
+                      size="small"
+                      onClick={() => removeFromCart(item.id)}
+                      color="error"
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </Box>
+                </Box>
+              ))}
+              <Divider sx={{ my: 2 }} />
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                <Typography variant="subtitle1">Total:</Typography>
+                <Typography variant="subtitle1" fontWeight="bold">
+                  ${totalPrice.toFixed(2)}
+                </Typography>
+              </Box>
+              <Button
+                variant="contained"
+                fullWidth
+                onClick={() => {
+                  handleCartClose();
+                  navigate('/checkout');
+                }}
+              >
+                Proceed to Checkout
+              </Button>
+            </>
+          )}
+        </Box>
+      </Menu>
     </>
   );
 };

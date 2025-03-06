@@ -13,6 +13,7 @@ import AdminPanel from './pages/AdminPanel';
 import AdminLoginPage from './pages/AdminLoginPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
+import { CartProvider } from './contexts/CartContext';
 import ProfilePage from './pages/ProfilePage';
 
 const App: React.FC = () => {
@@ -20,46 +21,48 @@ const App: React.FC = () => {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
-        <Router>
-          <MainLayout>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<HomePage />} />
-              <Route path="/product/:id" element={<ProductDetailPage />} />
-              <Route path="/category/:category" element={<CategoryProductsPage />} />
-              <Route path="/deals" element={<TodaysDealsPage />} />
-              <Route path="/search" element={<SearchResultsPage />} />
-              
-              {/* Admin routes */}
-              <Route path="/admin/login" element={<AdminLoginPage />} />
-              <Route 
-                path="/admin/dashboard" 
-                element={
-                  <ProtectedRoute>
-                    <AdminPanel />
-                  </ProtectedRoute>
-                } 
-              />
-              {/* Redirect /admin to /admin/dashboard */}
-              <Route 
-                path="/admin" 
-                element={
-                  localStorage.getItem('adminToken') 
-                    ? <Navigate to="/admin/dashboard" replace /> 
-                    : <Navigate to="/admin/login" replace />
-                } 
-              />
-              <Route 
-                path="/profile" 
-                element={
-                  <ProtectedRoute>
-                    <ProfilePage />
-                  </ProtectedRoute>
-                } 
-              />
-            </Routes>
-          </MainLayout>
-        </Router>
+        <CartProvider>
+          <Router>
+            <MainLayout>
+              <Routes>
+                {/* Public routes */}
+                <Route path="/" element={<HomePage />} />
+                <Route path="/product/:id" element={<ProductDetailPage />} />
+                <Route path="/category/:category" element={<CategoryProductsPage />} />
+                <Route path="/deals" element={<TodaysDealsPage />} />
+                <Route path="/search" element={<SearchResultsPage />} />
+                
+                {/* Admin routes */}
+                <Route path="/admin/login" element={<AdminLoginPage />} />
+                <Route 
+                  path="/admin/dashboard" 
+                  element={
+                    <ProtectedRoute>
+                      <AdminPanel />
+                    </ProtectedRoute>
+                  } 
+                />
+                {/* Redirect /admin to /admin/dashboard */}
+                <Route 
+                  path="/admin" 
+                  element={
+                    localStorage.getItem('adminToken') 
+                      ? <Navigate to="/admin/dashboard" replace /> 
+                      : <Navigate to="/admin/login" replace />
+                  } 
+                />
+                <Route 
+                  path="/profile" 
+                  element={
+                    <ProtectedRoute>
+                      <ProfilePage />
+                    </ProtectedRoute>
+                  } 
+                />
+              </Routes>
+            </MainLayout>
+          </Router>
+        </CartProvider>
       </AuthProvider>
     </ThemeProvider>
   );

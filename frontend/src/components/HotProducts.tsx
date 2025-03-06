@@ -4,6 +4,7 @@ import { styled } from '@mui/material/styles';
 import axios from 'axios';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { useCart } from '../contexts/CartContext';
 
 interface Product {
   id: string;
@@ -85,6 +86,7 @@ const HotProducts: React.FC = () => {
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
   const navigate = useNavigate();
+  const { addToCart } = useCart();
 
   const handleScroll = () => {
     if (scrollContainerRef.current) {
@@ -96,7 +98,7 @@ const HotProducts: React.FC = () => {
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollContainerRef.current) {
-      const scrollAmount = 600; // Scroll by roughly 2 cards
+      const scrollAmount = 600;
       const newScrollLeft = scrollContainerRef.current.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
       scrollContainerRef.current.scrollTo({
         left: newScrollLeft,
@@ -109,13 +111,23 @@ const HotProducts: React.FC = () => {
     navigate(`/product/${productId}`);
   };
 
+  const handleAddToCart = (e: React.MouseEvent, product: Product) => {
+    e.stopPropagation();
+    addToCart({
+      id: product.id,
+      title: product.title,
+      price: product.price,
+      image: product.image,
+      quantity: 1
+    });
+  };
+
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
         setError(null);
         const response = await axios.get('http://localhost:5000/api/products');
-        // Sort by rating and take top 8
         const sortedProducts = response.data
           .sort((a: Product, b: Product) => b.rating.rate - a.rating.rate)
           .slice(0, 8);
@@ -249,14 +261,15 @@ const HotProducts: React.FC = () => {
                       borderRadius: '4px',
                       textTransform: 'none',
                       fontWeight: 600,
+                      padding: '10px',
+                      fontSize: '0.95rem',
                       '&:hover': {
                         bgcolor: 'secondary.dark',
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                       }
                     }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // Add to cart logic here
-                    }}
+                    onClick={(e) => handleAddToCart(e, product)}
                   >
                     Add to Cart
                   </Button>

@@ -4,6 +4,7 @@ import { styled } from '@mui/material/styles';
 import axios from 'axios';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { useCart } from '../contexts/CartContext';
 
 interface Product {
   id: string;
@@ -86,6 +87,7 @@ const ElectronicsProducts: React.FC = () => {
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
   const navigate = useNavigate();
+  const { addToCart } = useCart();
 
   const handleScroll = () => {
     if (scrollContainerRef.current) {
@@ -108,6 +110,17 @@ const ElectronicsProducts: React.FC = () => {
 
   const handleProductClick = (productId: string) => {
     navigate(`/product/${productId}`);
+  };
+
+  const handleAddToCart = (e: React.MouseEvent, product: Product) => {
+    e.stopPropagation();
+    addToCart({
+      id: product.id,
+      title: product.title,
+      price: product.price,
+      image: product.image,
+      quantity: 1
+    });
   };
 
   useEffect(() => {
@@ -246,14 +259,15 @@ const ElectronicsProducts: React.FC = () => {
                       borderRadius: '4px',
                       textTransform: 'none',
                       fontWeight: 600,
+                      padding: '10px',
+                      fontSize: '0.95rem',
                       '&:hover': {
                         bgcolor: 'secondary.dark',
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                       }
                     }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // Add to cart logic here
-                    }}
+                    onClick={(e) => handleAddToCart(e, product)}
                   >
                     Add to Cart
                   </Button>
