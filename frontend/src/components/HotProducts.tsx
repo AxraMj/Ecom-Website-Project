@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Container, Typography, Card, CardMedia, CardContent, CardActions, Button, Rating, CircularProgress, Alert, IconButton } from '@mui/material';
+import { Box, Container, Typography, Card, CardMedia, CardContent, CardActions, Button, Rating, CircularProgress, Alert, IconButton, Snackbar } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import axios from 'axios';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Product {
   id: string;
@@ -87,6 +88,9 @@ const HotProducts: React.FC = () => {
   const [showRightArrow, setShowRightArrow] = useState(true);
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { isAuthenticated } = useAuth();
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
   const handleScroll = () => {
     if (scrollContainerRef.current) {
@@ -113,6 +117,13 @@ const HotProducts: React.FC = () => {
 
   const handleAddToCart = (e: React.MouseEvent, product: Product) => {
     e.stopPropagation();
+    
+    if (!isAuthenticated) {
+      setSnackbarMessage('Please log in to add items to cart');
+      setSnackbarOpen(true);
+      return;
+    }
+
     addToCart({
       id: product.id,
       title: product.title,
@@ -120,6 +131,12 @@ const HotProducts: React.FC = () => {
       image: product.image,
       quantity: 1
     });
+    setSnackbarMessage('Product added to cart');
+    setSnackbarOpen(true);
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
   };
 
   useEffect(() => {
@@ -271,7 +288,7 @@ const HotProducts: React.FC = () => {
                     }}
                     onClick={(e) => handleAddToCart(e, product)}
                   >
-                    Add to Cart
+                    {isAuthenticated ? 'Add to Cart' : 'Login to Add to Cart'}
                   </Button>
                 </CardActions>
               </ProductCard>
@@ -289,6 +306,12 @@ const HotProducts: React.FC = () => {
           )}
         </Box>
       </Container>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={handleSnackbarClose}
+        message={snackbarMessage}
+      />
     </Box>
   );
 };

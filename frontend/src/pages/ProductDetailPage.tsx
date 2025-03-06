@@ -18,11 +18,13 @@ import {
   Divider,
   CircularProgress,
   Alert,
+  Snackbar,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { FavoriteBorder, Favorite } from '@mui/icons-material';
 import axios from 'axios';
 import { useCart } from '../contexts/CartContext';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Product {
   id: string;
@@ -101,7 +103,10 @@ const ProductDetailPage: React.FC = () => {
   const [selectedSize, setSelectedSize] = useState('');
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
   const { addToCart } = useCart();
+  const { isAuthenticated } = useAuth();
 
   const sizes = ['S', 'M', 'L', 'XL', 'XXL'];
 
@@ -295,6 +300,12 @@ const ProductDetailPage: React.FC = () => {
   };
 
   const handleAddToCart = () => {
+    if (!isAuthenticated) {
+      setSnackbarMessage('Please log in to add items to cart');
+      setSnackbarOpen(true);
+      return;
+    }
+
     if (product) {
       addToCart({
         id: product.id,
@@ -303,7 +314,13 @@ const ProductDetailPage: React.FC = () => {
         image: product.image,
         quantity: 1
       });
+      setSnackbarMessage('Product added to cart');
+      setSnackbarOpen(true);
     }
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
   };
 
   if (loading) {
@@ -386,7 +403,7 @@ const ProductDetailPage: React.FC = () => {
                   fullWidth
                   onClick={handleAddToCart}
                 >
-                  Add to Cart
+                  {isAuthenticated ? 'Add to Cart' : 'Login to Add to Cart'}
                 </Button>
               )}
             </Box>
@@ -508,6 +525,12 @@ const ProductDetailPage: React.FC = () => {
           </Grid>
         </Box>
       </Grid>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={handleSnackbarClose}
+        message={snackbarMessage}
+      />
     </Container>
   );
 };

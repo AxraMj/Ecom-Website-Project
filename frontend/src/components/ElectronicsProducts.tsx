@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Container, Typography, Card, CardMedia, CardContent, CardActions, Button, Rating, CircularProgress, Alert, IconButton } from '@mui/material';
+import { Box, Container, Typography, Card, CardMedia, CardContent, CardActions, Button, Rating, CircularProgress, Alert, IconButton, Snackbar } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import axios from 'axios';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Product {
   id: string;
@@ -88,6 +89,9 @@ const ElectronicsProducts: React.FC = () => {
   const [showRightArrow, setShowRightArrow] = useState(true);
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { isAuthenticated } = useAuth();
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
   const handleScroll = () => {
     if (scrollContainerRef.current) {
@@ -114,6 +118,13 @@ const ElectronicsProducts: React.FC = () => {
 
   const handleAddToCart = (e: React.MouseEvent, product: Product) => {
     e.stopPropagation();
+    
+    if (!isAuthenticated) {
+      setSnackbarMessage('Please log in to add items to cart');
+      setSnackbarOpen(true);
+      return;
+    }
+
     addToCart({
       id: product.id,
       title: product.title,
@@ -121,6 +132,12 @@ const ElectronicsProducts: React.FC = () => {
       image: product.image,
       quantity: 1
     });
+    setSnackbarMessage('Product added to cart');
+    setSnackbarOpen(true);
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
   };
 
   useEffect(() => {
@@ -159,13 +176,12 @@ const ElectronicsProducts: React.FC = () => {
 
   return (
     <Box sx={{ 
-      py: 4,
-      overflow: 'hidden',
+      py: 6,
+      backgroundColor: '#f8f9fa',
       position: 'relative',
       width: '100%',
-      pl: { xs: 2, md: 4 },
     }}>
-      <Container maxWidth={false} disableGutters>
+      <Container maxWidth="xl">
         <Typography
           variant="h4"
           component="h2"
@@ -250,26 +266,20 @@ const ElectronicsProducts: React.FC = () => {
                     ${product.price.toFixed(2)}
                   </ProductPrice>
                 </CardContent>
-                <CardActions>
+                <CardActions sx={{ mt: 'auto' }}>
                   <Button 
-                    variant="contained" 
-                    fullWidth 
+                    size="large" 
                     sx={{ 
-                      bgcolor: 'secondary.main',
-                      borderRadius: '4px',
-                      textTransform: 'none',
-                      fontWeight: 600,
-                      padding: '10px',
-                      fontSize: '0.95rem',
+                      width: '100%',
+                      bgcolor: '#2e7d32',
+                      color: 'white',
                       '&:hover': {
-                        bgcolor: 'secondary.dark',
-                        transform: 'translateY(-2px)',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                      }
+                        bgcolor: '#1b5e20',
+                      },
                     }}
                     onClick={(e) => handleAddToCart(e, product)}
                   >
-                    Add to Cart
+                    {isAuthenticated ? 'Add to Cart' : 'Login to Add to Cart'}
                   </Button>
                 </CardActions>
               </ProductCard>
@@ -287,6 +297,12 @@ const ElectronicsProducts: React.FC = () => {
           )}
         </Box>
       </Container>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={handleSnackbarClose}
+        message={snackbarMessage}
+      />
     </Box>
   );
 };
