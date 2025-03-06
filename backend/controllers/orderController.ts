@@ -87,4 +87,50 @@ export const getOrderById = async (req: AuthRequest, res: Response) => {
       message: 'Error fetching order'
     });
   }
+};
+
+// Submit return request
+export const submitReturn = async (req: AuthRequest, res: Response) => {
+  try {
+    const { reason } = req.body;
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    // Check if the order belongs to the user
+    if (order.userId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to return this order'
+      });
+    }
+
+    // Check if order is eligible for return (delivered status)
+    if (order.status !== 'delivered') {
+      return res.status(400).json({
+        success: false,
+        message: 'Order is not eligible for return'
+      });
+    }
+
+    // Update order status to 'return-requested'
+    order.status = 'return-requested';
+    order.returnReason = reason;
+    await order.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Return request submitted successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error submitting return request'
+    });
+  }
 }; 

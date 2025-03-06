@@ -17,6 +17,7 @@ import { CartProvider } from './contexts/CartContext';
 import ProfilePage from './pages/ProfilePage';
 import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
+import OrdersPage from './pages/OrdersPage';
 
 const App: React.FC = () => {
   return (
@@ -67,6 +68,14 @@ const App: React.FC = () => {
                   element={
                     <ProtectedRoute>
                       <CheckoutPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/orders" 
+                  element={
+                    <ProtectedRoute>
+                      <OrdersPage />
                     </ProtectedRoute>
                   } 
                 />

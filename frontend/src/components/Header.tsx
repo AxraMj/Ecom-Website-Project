@@ -19,6 +19,7 @@ import {
   Divider,
   TextField,
   InputAdornment,
+  ListItemIcon,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -36,6 +37,7 @@ import {
   Delete as DeleteIcon,
   Remove,
   Add,
+  LocalShipping as LocalShippingIcon,
 } from '@mui/icons-material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -374,9 +376,14 @@ const Header: React.FC = () => {
             handleMenuClose();
           }}>Profile</MenuItem>
           <MenuItem onClick={() => {
-            navigate('/orders');
             handleMenuClose();
-          }}>My Orders</MenuItem>
+            navigate('/orders');
+          }}>
+            <ListItemIcon>
+              <LocalShippingIcon fontSize="small" />
+            </ListItemIcon>
+            Returns & Orders
+          </MenuItem>
           <MenuItem onClick={() => {
             navigate('/wishlist');
             handleMenuClose();
@@ -569,7 +576,7 @@ const Header: React.FC = () => {
               </Box>
             </NavButton>
 
-            <NavButton>
+            <NavButton onClick={() => navigate('/orders')}>
               <Box>
                 <Typography variant="caption" sx={{ opacity: 0.8 }}>
                   Returns

@@ -33,6 +33,7 @@ export interface IOrder extends Document {
   payment: PaymentDetails;
   totalAmount: number;
   status: string;
+  returnReason?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -76,8 +77,12 @@ const orderSchema = new Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
+    enum: ['pending', 'processing', 'shipped', 'delivered', 'return-requested', 'cancelled'],
     default: 'pending'
+  },
+  returnReason: {
+    type: String,
+    default: null
   }
 }, {
   timestamps: true
