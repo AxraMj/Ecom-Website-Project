@@ -18,71 +18,83 @@ import ProfilePage from './pages/ProfilePage';
 import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
 import OrdersPage from './pages/OrdersPage';
+import { WishlistProvider } from './contexts/WishlistContext';
+import WishlistPage from './pages/WishlistPage';
 
 const App: React.FC = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
-        <CartProvider>
-          <Router>
-            <MainLayout>
-              <Routes>
-                {/* Public routes */}
-                <Route path="/" element={<HomePage />} />
-                <Route path="/product/:id" element={<ProductDetailPage />} />
-                <Route path="/category/:category" element={<CategoryProductsPage />} />
-                <Route path="/deals" element={<TodaysDealsPage />} />
-                <Route path="/search" element={<SearchResultsPage />} />
-                
-                {/* Admin routes */}
-                <Route path="/admin/login" element={<AdminLoginPage />} />
-                <Route 
-                  path="/admin/dashboard" 
-                  element={
-                    <ProtectedRoute>
-                      <AdminPanel />
-                    </ProtectedRoute>
-                  } 
-                />
-                {/* Redirect /admin to /admin/dashboard */}
-                <Route 
-                  path="/admin" 
-                  element={
-                    localStorage.getItem('adminToken') 
-                      ? <Navigate to="/admin/dashboard" replace /> 
-                      : <Navigate to="/admin/login" replace />
-                  } 
-                />
-                <Route 
-                  path="/profile" 
-                  element={
-                    <ProtectedRoute>
-                      <ProfilePage />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route path="/cart" element={<CartPage />} />
-                <Route 
-                  path="/checkout" 
-                  element={
-                    <ProtectedRoute>
-                      <CheckoutPage />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/orders" 
-                  element={
-                    <ProtectedRoute>
-                      <OrdersPage />
-                    </ProtectedRoute>
-                  } 
-                />
-              </Routes>
-            </MainLayout>
-          </Router>
-        </CartProvider>
+        <WishlistProvider>
+          <CartProvider>
+            <Router>
+              <MainLayout>
+                <Routes>
+                  {/* Public routes */}
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/product/:id" element={<ProductDetailPage />} />
+                  <Route path="/category/:category" element={<CategoryProductsPage />} />
+                  <Route path="/deals" element={<TodaysDealsPage />} />
+                  <Route path="/search" element={<SearchResultsPage />} />
+                  
+                  {/* Admin routes */}
+                  <Route path="/admin/login" element={<AdminLoginPage />} />
+                  <Route 
+                    path="/admin/dashboard" 
+                    element={
+                      <ProtectedRoute>
+                        <AdminPanel />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  {/* Redirect /admin to /admin/dashboard */}
+                  <Route 
+                    path="/admin" 
+                    element={
+                      localStorage.getItem('adminToken') 
+                        ? <Navigate to="/admin/dashboard" replace /> 
+                        : <Navigate to="/admin/login" replace />
+                    } 
+                  />
+                  <Route 
+                    path="/profile" 
+                    element={
+                      <ProtectedRoute>
+                        <ProfilePage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route path="/cart" element={<CartPage />} />
+                  <Route 
+                    path="/checkout" 
+                    element={
+                      <ProtectedRoute>
+                        <CheckoutPage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/orders" 
+                    element={
+                      <ProtectedRoute>
+                        <OrdersPage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/wishlist" 
+                    element={
+                      <ProtectedRoute>
+                        <WishlistPage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                </Routes>
+              </MainLayout>
+            </Router>
+          </CartProvider>
+        </WishlistProvider>
       </AuthProvider>
     </ThemeProvider>
   );

@@ -28,6 +28,7 @@ import { useAuth } from '../contexts/AuthContext';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import { useWishlist } from '../contexts/WishlistContext';
 
 interface Product {
   id: string;
@@ -110,7 +111,8 @@ const ProductDetailPage: React.FC = () => {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const { addToCart } = useCart();
   const { isAuthenticated } = useAuth();
-  const [isInWishlist, setIsInWishlist] = useState(false);
+  const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
+  const [isInWishlistState, setIsInWishlistState] = useState(false);
 
   const sizes = ['S', 'M', 'L', 'XL', 'XXL'];
 
@@ -291,6 +293,12 @@ const ProductDetailPage: React.FC = () => {
     }
   }, [id]);
 
+  useEffect(() => {
+    if (product) {
+      setIsInWishlistState(isInWishlist(product.id));
+    }
+  }, [product, isInWishlist]);
+
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
@@ -335,10 +343,38 @@ const ProductDetailPage: React.FC = () => {
     setSnackbarOpen(false);
   };
 
-  const handleWishlistClick = () => {
-    setIsInWishlist(!isInWishlist);
-    setSnackbarMessage(isInWishlist ? 'Removed from wishlist' : 'Added to wishlist');
-    setSnackbarOpen(true);
+  const handleWishlistClick = async () => {
+    if (!isAuthenticated) {
+      setSnackbarMessage('Please log in to add items to wishlist');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    try {
+      if (product) {
+        if (isInWishlistState) {
+          await removeFromWishlist(product.id);
+          setSnackbarMessage('Removed from wishlist');
+        } else {
+          await addToWishlist({
+            id: product.id,
+            title: product.title,
+            price: product.price,
+            image: product.image,
+            category: product.category,
+            description: product.description,
+            rating: product.rating
+          });
+          setSnackbarMessage('Added to wishlist');
+        }
+        setIsInWishlistState(!isInWishlistState);
+        setSnackbarOpen(true);
+      }
+    } catch (error: any) {
+      console.error('Wishlist error:', error);
+      setSnackbarMessage(error.response?.data?.message || 'Error updating wishlist');
+      setSnackbarOpen(true);
+    }
   };
 
   if (loading) {
@@ -381,7 +417,7 @@ const ProductDetailPage: React.FC = () => {
                   }
                 }}
               >
-                {isInWishlist ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+                {isInWishlistState ? <FavoriteIcon /> : <FavoriteBorderIcon />}
               </IconButton>
             </Box>
             
