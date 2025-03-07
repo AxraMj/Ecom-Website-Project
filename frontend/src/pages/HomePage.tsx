@@ -9,22 +9,10 @@ import Gadgets from '../components/Gadgets';
 
 const HomePage: React.FC = () => {
   return (
-    <Box
-      sx={{
-        width: '100vw',
-        margin: 0,
-        padding: 0,
-        position: 'relative',
-        display: 'block',
-        overflowX: 'hidden',
-        marginLeft: 'calc(-50vw + 50%)',
-        marginRight: 'calc(-50vw + 50%)',
-        '& > *': {
-          margin: 0,
-          padding: 0,
-        }
-      }}
-    >
+    <Box sx={{ 
+      width: '100%',
+      overflowX: 'hidden', // Prevent horizontal scroll
+    }}>
       <Banner />
       <HotProducts />
       <FeaturedProducts />

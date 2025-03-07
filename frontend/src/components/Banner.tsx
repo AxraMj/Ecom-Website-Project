@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, IconButton, styled, Typography, Button } from '@mui/material';
+import { Box, IconButton, styled, Typography, Button, useTheme } from '@mui/material';
 import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
@@ -162,23 +162,43 @@ const Banner: React.FC = () => {
   }, [isPaused, nextSlide]);
 
   return (
-    <BannerContainer
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-    >
-      {bannerImages.map((image, index) => (
+    <Box sx={{ 
+      position: 'relative', 
+      width: '100vw', // Full viewport width
+      height: { 
+        xs: 'calc(100vh - 64px)', // Full viewport height minus header height for mobile
+        sm: 'calc(100vh - 64px)', // For tablet
+        md: 'calc(100vh - 64px)'  // For desktop
+      },
+      overflow: 'hidden',
+      marginLeft: 'calc(-50vw + 50%)',
+      marginRight: 'calc(-50vw + 50%)',
+    }}>
+      {/* Banner Images */}
+      {bannerImages.map((banner, index) => (
         <Box
           key={index}
+          onClick={() => handleBannerClick(banner.link)}
           sx={{
             position: 'absolute',
             width: '100%',
             height: '100%',
-            opacity: index === currentSlide ? 1 : 0,
-            transition: 'opacity 0.5s ease-in-out',
+            transition: 'transform 0.5s ease-in-out',
+            transform: `translateX(${(index - currentSlide) * 100}%)`,
             cursor: 'pointer',
           }}
         >
-          <BannerImage src={image.url} alt={image.alt} />
+          <Box
+            component="img"
+            src={banner.url}
+            alt={banner.alt}
+            sx={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover', // This ensures the image covers the full area
+              objectPosition: 'center', // Centers the image
+            }}
+          />
           <BannerOverlay>
             <Typography
               variant="h2"
@@ -189,7 +209,7 @@ const Banner: React.FC = () => {
                 textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
               }}
             >
-              {image.title}
+              {banner.title}
             </Typography>
             <Typography
               variant="h5"
@@ -200,10 +220,10 @@ const Banner: React.FC = () => {
                 maxWidth: '600px',
               }}
             >
-              {image.subtitle}
+              {banner.subtitle}
             </Typography>
-            <BannerButton onClick={() => handleBannerClick(image.link)}>
-              {image.buttonText}
+            <BannerButton onClick={() => handleBannerClick(banner.link)}>
+              {banner.buttonText}
             </BannerButton>
           </BannerOverlay>
         </Box>
@@ -223,7 +243,7 @@ const Banner: React.FC = () => {
           <Dot key={index} active={index === currentSlide} onClick={() => goToSlide(index)} />
         ))}
       </BannerDots>
-    </BannerContainer>
+    </Box>
   );
 };
 

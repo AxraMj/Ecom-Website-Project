@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Container } from '@mui/material';
+import { Box } from '@mui/material';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
@@ -15,20 +15,22 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         flexDirection: 'column',
         minHeight: '100vh',
         bgcolor: 'background.default',
+        overflowX: 'hidden',
+        width: '100%',
       }}
     >
       <Header />
-      <Container
+      <Box
         component="main"
         sx={{
           flex: 1,
-          py: 4,
           display: 'flex',
           flexDirection: 'column',
+          width: '100%',
         }}
       >
         {children}
-      </Container>
+      </Box>
       <Footer />
     </Box>
   );
