@@ -25,6 +25,9 @@ import { FavoriteBorder, Favorite } from '@mui/icons-material';
 import axios from 'axios';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 
 interface Product {
   id: string;
@@ -107,6 +110,7 @@ const ProductDetailPage: React.FC = () => {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const { addToCart } = useCart();
   const { isAuthenticated } = useAuth();
+  const [isInWishlist, setIsInWishlist] = useState(false);
 
   const sizes = ['S', 'M', 'L', 'XL', 'XXL'];
 
@@ -331,6 +335,12 @@ const ProductDetailPage: React.FC = () => {
     setSnackbarOpen(false);
   };
 
+  const handleWishlistClick = () => {
+    setIsInWishlist(!isInWishlist);
+    setSnackbarMessage(isInWishlist ? 'Removed from wishlist' : 'Added to wishlist');
+    setSnackbarOpen(true);
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
@@ -357,9 +367,23 @@ const ProductDetailPage: React.FC = () => {
             <ProductImage src={product.image} alt={product.title} />
           </Grid>
           <Grid item xs={12} md={6}>
-            <Typography variant="h4" component="h1" gutterBottom>
-              {product.title}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+              <Typography variant="h4" component="h1">
+                {product.title}
+              </Typography>
+              <IconButton
+                onClick={handleWishlistClick}
+                color="secondary"
+                aria-label="add to wishlist"
+                sx={{ 
+                  '&:hover': {
+                    backgroundColor: 'transparent',
+                  }
+                }}
+              >
+                {isInWishlist ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+              </IconButton>
+            </Box>
             
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
               <Rating value={product.rating.rate} precision={0.1} readOnly />
@@ -402,18 +426,16 @@ const ProductDetailPage: React.FC = () => {
               {product.description}
             </Typography>
 
-            <Box sx={{ mb: 3 }}>
-              {(product.stock ?? 0) > 0 && (
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  size="large"
-                  fullWidth
-                  onClick={handleAddToCart}
-                >
-                  {isAuthenticated ? 'Add to Cart' : 'Login to Add to Cart'}
-                </Button>
-              )}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+              <Button
+                variant="contained"
+                color="primary"
+                size="large"
+                onClick={handleAddToCart}
+                startIcon={<ShoppingCartIcon />}
+              >
+                Add to Cart
+              </Button>
             </Box>
 
             {/* Size Selection */}
@@ -431,21 +453,6 @@ const ProductDetailPage: React.FC = () => {
                   </SizeButton>
                 ))}
               </Box>
-            </Box>
-
-            {/* Action Buttons */}
-            <Box sx={{ display: 'flex', gap: 2, mb: 4 }}>
-              <IconButton
-                onClick={toggleWishlist}
-                sx={{
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  borderRadius: 1,
-                  p: 2,
-                }}
-              >
-                {isWishlisted ? <Favorite color="error" /> : <FavoriteBorder />}
-              </IconButton>
             </Box>
 
             {/* Tabs */}
