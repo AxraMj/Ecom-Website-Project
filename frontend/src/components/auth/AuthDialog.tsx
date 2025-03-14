@@ -41,16 +41,34 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
     setLoading(true);
 
     try {
-      if (tab === 0) { // Login
-        await login(formData.email, formData.password);
-      } else { // Register
+      if (tab === 1) { // Register
+        // Email validation
+        const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+        if (!emailRegex.test(formData.email)) {
+          throw new Error('Please enter a valid email address');
+        }
+
+        // Name validation
+        if (formData.name.trim().length < 2) {
+          throw new Error('Name must be at least 2 characters long');
+        }
+
+        // Password validation
+        if (formData.password.length < 6) {
+          throw new Error('Password must be at least 6 characters long');
+        }
+
+        if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
+          throw new Error('Password must contain at least one uppercase letter, one lowercase letter, and one number');
+        }
+
         if (formData.password !== formData.confirmPassword) {
           throw new Error('Passwords do not match');
         }
-        if (formData.password.length < 6) {
-          throw new Error('Password should be at least 6 characters');
-        }
+
         await register(formData.name, formData.email, formData.password);
+      } else {
+        await login(formData.email, formData.password);
       }
       onClose();
     } catch (err) {
