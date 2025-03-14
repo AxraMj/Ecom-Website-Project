@@ -9,8 +9,15 @@ import {
   Button,
   Box,
   Alert,
-  CircularProgress
+  CircularProgress,
+  FormHelperText,
+  IconButton,
+  InputAdornment
 } from '@mui/material';
+import {
+  Visibility,
+  VisibilityOff
+} from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface AuthDialogProps {
@@ -24,6 +31,9 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
   const [error, setError] = useState<string | null>(null);
   const { login, register } = useAuth();
 
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -31,44 +41,97 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
     confirmPassword: ''
   });
 
+  const [validationErrors, setValidationErrors] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
+
+  const validateField = (name: string, value: string) => {
+    let error = '';
+
+    switch (name) {
+      case 'name':
+        if (value.trim().length < 2) {
+          error = 'Name must be at least 2 characters long';
+        }
+        break;
+
+      case 'email':
+        const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+        if (!emailRegex.test(value)) {
+          error = 'Please enter a valid email address';
+        }
+        break;
+
+      case 'password':
+        if (value.length < 6) {
+          error = 'Password must be at least 6 characters long';
+        } else if (!/(?=.*[a-z])/.test(value)) {
+          error = 'Password must contain at least one lowercase letter';
+        } else if (!/(?=.*[A-Z])/.test(value)) {
+          error = 'Password must contain at least one uppercase letter';
+        } else if (!/(?=.*\d)/.test(value)) {
+          error = 'Password must contain at least one number';
+        }
+        break;
+
+      case 'confirmPassword':
+        if (value !== formData.password) {
+          error = 'Passwords do not match';
+        }
+        break;
+
+      default:
+        break;
+    }
+
+    return error;
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    
+    // Only validate if there's a value or if it's the register tab
+    if (tab === 1 || value) {
+      const error = validateField(name, value);
+      setValidationErrors(prev => ({
+        ...prev,
+        [name]: error
+      }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (tab === 1) { // Register
+      // Validate all fields
+      const errors = {
+        name: validateField('name', formData.name),
+        email: validateField('email', formData.email),
+        password: validateField('password', formData.password),
+        confirmPassword: validateField('confirmPassword', formData.confirmPassword)
+      };
+
+      setValidationErrors(errors);
+
+      // Check if there are any validation errors
+      if (Object.values(errors).some(error => error !== '')) {
+        return;
+      }
+    }
+
     setLoading(true);
 
     try {
-      if (tab === 1) { // Register
-        // Email validation
-        const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
-        if (!emailRegex.test(formData.email)) {
-          throw new Error('Please enter a valid email address');
-        }
-
-        // Name validation
-        if (formData.name.trim().length < 2) {
-          throw new Error('Name must be at least 2 characters long');
-        }
-
-        // Password validation
-        if (formData.password.length < 6) {
-          throw new Error('Password must be at least 6 characters long');
-        }
-
-        if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-          throw new Error('Password must contain at least one uppercase letter, one lowercase letter, and one number');
-        }
-
-        if (formData.password !== formData.confirmPassword) {
-          throw new Error('Passwords do not match');
-        }
-
-        await register(formData.name, formData.email, formData.password);
-      } else {
+      if (tab === 0) { // Login
         await login(formData.email, formData.password);
+      } else { // Register
+        await register(formData.name, formData.email, formData.password);
       }
       onClose();
     } catch (err) {
@@ -77,6 +140,18 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleClickShowPassword = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const handleClickShowConfirmPassword = () => {
+    setShowConfirmPassword(!showConfirmPassword);
+  };
+
+  const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault(); // Prevent button from taking focus
   };
 
   return (
@@ -104,6 +179,8 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
               autoComplete="name"
               value={formData.name}
               onChange={handleChange}
+              error={!!validationErrors.name}
+              helperText={validationErrors.name}
             />
           )}
           <TextField
@@ -115,6 +192,8 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
             autoComplete="email"
             value={formData.email}
             onChange={handleChange}
+            error={!!validationErrors.email}
+            helperText={validationErrors.email}
           />
           <TextField
             margin="normal"
@@ -122,9 +201,25 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
             fullWidth
             label="Password"
             name="password"
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             value={formData.password}
             onChange={handleChange}
+            error={!!validationErrors.password}
+            helperText={validationErrors.password}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="toggle password visibility"
+                    onClick={handleClickShowPassword}
+                    onMouseDown={handleMouseDownPassword}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
           />
           {tab === 1 && (
             <TextField
@@ -133,17 +228,44 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
               fullWidth
               label="Confirm Password"
               name="confirmPassword"
-              type="password"
+              type={showConfirmPassword ? 'text' : 'password'}
               value={formData.confirmPassword}
               onChange={handleChange}
+              error={!!validationErrors.confirmPassword}
+              helperText={validationErrors.confirmPassword}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle confirm password visibility"
+                      onClick={handleClickShowConfirmPassword}
+                      onMouseDown={handleMouseDownPassword}
+                      edge="end"
+                    >
+                      {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
+          )}
+          {tab === 1 && (
+            <FormHelperText sx={{ mt: 1 }}>
+              Password must contain at least:
+              <ul style={{ margin: '4px 0' }}>
+                <li>6 characters</li>
+                <li>One uppercase letter</li>
+                <li>One lowercase letter</li>
+                <li>One number</li>
+              </ul>
+            </FormHelperText>
           )}
           <Button
             type="submit"
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
-            disabled={loading}
+            disabled={loading || (tab === 1 && Object.values(validationErrors).some(error => error !== ''))}
           >
             {loading ? (
               <CircularProgress size={24} />
