@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -47,6 +47,25 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
     password: '',
     confirmPassword: ''
   });
+
+  useEffect(() => {
+    if (open) {
+      setFormData({
+        name: '',
+        email: '',
+        password: '',
+        confirmPassword: ''
+      });
+      setValidationErrors({
+        name: '',
+        email: '',
+        password: '',
+        confirmPassword: ''
+      });
+      setError(null);
+      setTab(0);
+    }
+  }, [open]);
 
   const validateField = (name: string, value: string) => {
     let error = '';
