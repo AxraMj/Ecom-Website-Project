@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import { generateToken } from '../middleware/authMiddleware';
 import User, { IUserDocument } from '../models/User';
+import { protect } from '../middleware/authMiddleware';
 
 // Extend Express Request type to include user
 interface AuthRequest extends Request {
@@ -69,7 +70,7 @@ router.post('/login', async (req: Request, res: Response) => {
 });
 
 // Get user profile
-router.get('/profile', async (req: AuthRequest, res: Response) => {
+router.get('/profile', protect, async (req: AuthRequest, res: Response) => {
   try {
     if (!req.user?._id) {
       return res.status(401).json({ message: 'Not authorized' });
@@ -84,6 +85,46 @@ router.get('/profile', async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('Profile error:', error);
     res.status(500).json({ message: 'Error fetching profile' });
+  }
+});
+
+// Update user profile
+router.put('/profile', protect, async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user?._id) {
+      return res.status(401).json({ message: 'Not authorized' });
+    }
+
+    const { name, currentPassword, newPassword } = req.body;
+
+    // Find user
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // If trying to change password, verify current password
+    if (currentPassword && newPassword) {
+      const isMatch = await user.comparePassword(currentPassword);
+      if (!isMatch) {
+        return res.status(400).json({ message: 'Current password is incorrect' });
+      }
+      user.password = newPassword;
+    }
+
+    // Update name if provided
+    if (name) {
+      user.name = name;
+    }
+
+    await user.save();
+
+    // Return updated user without password
+    const updatedUser = await User.findById(user._id).select('-password');
+    res.json(updatedUser);
+  } catch (error) {
+    console.error('Profile update error:', error);
+    res.status(500).json({ message: 'Error updating profile' });
   }
 });
 

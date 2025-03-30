@@ -1,8 +1,28 @@
-const User = require('../models/userModel');
-const jwt = require('jsonwebtoken');
+import { Request, Response } from 'express';
+import User, { IUserDocument } from '../models/User';
+import jwt from 'jsonwebtoken';
+
+interface RegisterUserRequest extends Request {
+  body: {
+    name: string;
+    email: string;
+    password: string;
+  };
+}
+
+interface LoginUserRequest extends Request {
+  body: {
+    email: string;
+    password: string;
+  };
+}
+
+interface AuthRequest extends Request {
+  user?: IUserDocument;
+}
 
 // Register a new user
-exports.registerUser = async (req, res) => {
+export const registerUser = async (req: RegisterUserRequest, res: Response) => {
   try {
     const { name, email, password } = req.body;
 
@@ -61,7 +81,7 @@ exports.registerUser = async (req, res) => {
       password
     });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || '', {
       expiresIn: '30d'
     });
 
@@ -78,13 +98,13 @@ exports.registerUser = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error instanceof Error ? error.message : 'An error occurred'
     });
   }
 };
 
 // Login user
-exports.loginUser = async (req, res) => {
+export const loginUser = async (req: LoginUserRequest, res: Response) => {
   try {
     const { email, password } = req.body;
 
@@ -110,7 +130,7 @@ exports.loginUser = async (req, res) => {
       });
     }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || '', {
       expiresIn: '30d'
     });
 
@@ -127,14 +147,21 @@ exports.loginUser = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error instanceof Error ? error.message : 'An error occurred'
     });
   }
 };
 
 // Get currently logged in user details
-exports.getUserProfile = async (req, res) => {
+export const getUserProfile = async (req: AuthRequest, res: Response) => {
   try {
+    if (!req.user?._id) {
+      return res.status(401).json({
+        success: false,
+        message: 'Not authorized'
+      });
+    }
+
     const user = await User.findById(req.user._id);
 
     res.status(200).json({
@@ -144,7 +171,7 @@ exports.getUserProfile = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error instanceof Error ? error.message : 'An error occurred'
     });
   }
 }; 

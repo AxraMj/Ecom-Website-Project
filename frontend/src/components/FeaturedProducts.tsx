@@ -1,13 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Container, Typography, Card, CardMedia, CardContent, CardActions, Button, Rating, Grid, CircularProgress, Alert, Snackbar } from '@mui/material';
-import { styled } from '@mui/material/styles';
-import axios from 'axios';
+import {
+  Box,
+  Container,
+  Typography,
+  Grid,
+  Card,
+  CardMedia,
+  CardContent,
+  Rating,
+  Button,
+  CircularProgress,
+  Alert,
+} from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { useCart } from '../contexts/CartContext';
-import { useAuth } from '../contexts/AuthContext';
 
 interface Product {
   id: string;
+  _id?: string;  // MongoDB ID
   title: string;
   price: number;
   rating: {
@@ -17,63 +28,34 @@ interface Product {
   image: string;
 }
 
-const ProductCard = styled(Card)(({ theme }) => ({
-  height: '100%',
-  display: 'flex',
-  flexDirection: 'column',
-  transition: 'all 0.3s ease',
-  borderRadius: '12px',
-  backgroundColor: '#fff',
-  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-  '&:hover': {
-    transform: 'translateY(-4px)',
-    boxShadow: '0 12px 20px rgba(0,0,0,0.1)',
-  },
-}));
-
-const ProductImage = styled(CardMedia)({
-  paddingTop: '100%',
-  backgroundSize: 'contain',
-  backgroundColor: '#f8f9fa',
-  transition: 'transform 0.3s ease',
-  '&:hover': {
-    transform: 'scale(1.05)',
-  },
-});
-
-const ProductPrice = styled(Typography)(({ theme }) => ({
-  color: theme.palette.primary.main,
-  fontWeight: 600,
-  fontSize: '1.25rem',
-}));
-
-const LoadingContainer = styled(Box)({
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  minHeight: '300px',
-});
-
 const FeaturedProducts: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
   const navigate = useNavigate();
   const { addToCart } = useCart();
-  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await axios.get('http://localhost:5000/api/featured-products');
-        setProducts(response.data);
+        const response = await axios.get('http://localhost:5000/api/products');
+        
+        if (response.data.success) {
+          // Filter featured products (you can modify this logic based on your needs)
+          const featuredProducts = response.data.products
+            .filter((product: Product) => 
+              product.rating.rate >= 4.5 || product.rating.count >= 100
+            )
+            .slice(0, 4); // Get top 4 featured products
+          setProducts(featuredProducts);
+        } else {
+          setError('Failed to load featured products. Please try again later.');
+        }
       } catch (err) {
+        console.error('Error fetching featured products:', err);
         setError('Failed to load featured products. Please try again later.');
-        console.error('Error fetching products:', err);
       } finally {
         setLoading(false);
       }
@@ -88,160 +70,90 @@ const FeaturedProducts: React.FC = () => {
 
   const handleAddToCart = (e: React.MouseEvent, product: Product) => {
     e.stopPropagation();
-    
-    if (!isAuthenticated) {
-      setSnackbarMessage('Please log in to add items to cart');
-      setSnackbarOpen(true);
-      return;
-    }
-
     addToCart({
-      id: product.id,
+      id: product._id || product.id,
       title: product.title,
       price: product.price,
       image: product.image,
       quantity: 1
     });
-    setSnackbarMessage('Product added to cart');
-    setSnackbarOpen(true);
-  };
-
-  const handleSnackbarClose = () => {
-    setSnackbarOpen(false);
   };
 
   if (loading) {
     return (
-      <LoadingContainer>
-        <CircularProgress color="primary" />
-      </LoadingContainer>
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+        <CircularProgress />
+      </Box>
     );
   }
 
   if (error) {
     return (
-      <Box sx={{ p: 3 }}>
-        <Alert severity="error">{error}</Alert>
+      <Box sx={{ py: 4 }}>
+        <Container>
+          <Alert severity="error">{error}</Alert>
+        </Container>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ 
-      py: 6,
-      backgroundColor: '#f8f9fa',
-      position: 'relative',
-      width: '100%',
-    }}>
-      <Container maxWidth="xl">
-        <Typography
-          variant="h4"
-          component="h2"
-          sx={{
-            mb: 4,
-            fontWeight: 800,
-            color: '#1a1a1a',
-            position: 'relative',
-            pl: { xs: 2, md: 4 },
-            '&::after': {
-              content: '""',
-              display: 'block',
-              width: '80px',
-              height: '4px',
-              background: 'linear-gradient(90deg, #1a1a1a 0%, #666 100%)',
-              margin: '16px 0',
-              borderRadius: '2px',
-            },
-          }}
-        >
+    <Box sx={{ py: 6, bgcolor: 'background.paper' }}>
+      <Container maxWidth="lg">
+        <Typography variant="h4" component="h2" gutterBottom align="center">
           Featured Products
         </Typography>
-
-        <Grid container spacing={3} sx={{ px: { xs: 2, md: 4 } }}>
+        <Grid container spacing={4}>
           {products.map((product) => (
-            <Grid item xs={12} sm={6} md={4} key={product.id}>
-              <ProductCard
-                onClick={() => handleProductClick(product.id)}
+            <Grid item key={product._id || product.id} xs={12} sm={6} md={3}>
+              <Card
                 sx={{
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
                   cursor: 'pointer',
                   '&:hover': {
                     transform: 'translateY(-4px)',
-                    boxShadow: 3,
+                    boxShadow: 4,
+                    transition: 'all 0.3s ease',
                   },
                 }}
+                onClick={() => handleProductClick(product._id || product.id)}
               >
-                <ProductImage
+                <CardMedia
+                  component="img"
+                  height="200"
                   image={product.image}
-                  title={product.title}
+                  alt={product.title}
+                  sx={{ objectFit: 'contain', p: 2 }}
                 />
                 <CardContent sx={{ flexGrow: 1 }}>
-                  <Typography 
-                    gutterBottom 
-                    variant="h6" 
-                    component="h3" 
-                    sx={{
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      lineHeight: 1.3,
-                      height: '2.6em',
-                      color: '#1a1a1a',
-                      fontWeight: 600,
-                      fontSize: '1rem',
-                    }}
-                  >
+                  <Typography gutterBottom variant="h6" component="h3" noWrap>
                     {product.title}
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <Rating 
-                      value={product.rating.rate} 
-                      precision={0.1} 
-                      readOnly 
-                      size="small"
-                    />
+                    <Rating value={product.rating.rate} precision={0.1} readOnly size="small" />
                     <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
                       ({product.rating.count})
                     </Typography>
                   </Box>
-                  <ProductPrice>
+                  <Typography variant="h6" color="primary" gutterBottom>
                     ${product.price.toFixed(2)}
-                  </ProductPrice>
-                </CardContent>
-                <CardActions sx={{ p: 2 }}>
-                  <Button 
-                    variant="contained" 
-                    fullWidth 
-                    sx={{ 
-                      bgcolor: 'secondary.main',
-                      borderRadius: '4px',
-                      textTransform: 'none',
-                      fontWeight: 600,
-                      padding: '10px',
-                      fontSize: '0.95rem',
-                      '&:hover': {
-                        bgcolor: 'secondary.dark',
-                        transform: 'translateY(-2px)',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                      }
-                    }}
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    fullWidth
                     onClick={(e) => handleAddToCart(e, product)}
+                    sx={{ mt: 2 }}
                   >
-                    {isAuthenticated ? 'Add to Cart' : 'Login to Add to Cart'}
+                    Add to Cart
                   </Button>
-                </CardActions>
-              </ProductCard>
+                </CardContent>
+              </Card>
             </Grid>
           ))}
         </Grid>
       </Container>
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={3000}
-        onClose={handleSnackbarClose}
-        message={snackbarMessage}
-      />
     </Box>
   );
 };

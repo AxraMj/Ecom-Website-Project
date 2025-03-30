@@ -18,9 +18,11 @@ import {
 import { styled } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useCart } from '../contexts/CartContext';
 
 interface Product {
   id: string;
+  _id?: string;  // MongoDB ID
   title: string;
   price: number;
   description: string;
@@ -30,6 +32,17 @@ interface Product {
     rate: number;
     count: number;
   };
+  stock?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+interface FilterState {
+  priceRange: [number, number];
+  categories: string[];
+  minRating: number;
+  sortBy: string;
+  inStock: boolean;
 }
 
 const ProductCard = styled(Card)(({ theme }) => ({
@@ -52,71 +65,128 @@ const ProductImage = styled(CardMedia)({
 const SearchResultsPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { addToCart } = useCart();
   const theme = useTheme();
   const [products, setProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const searchQuery = new URLSearchParams(location.search).get('q') || '';
-  const category = location.pathname.split('/category/')[1]?.split('?')[0];
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+  const [maxPrice, setMaxPrice] = useState(0);
+  const [filters, setFilters] = useState<FilterState>({
+    priceRange: [0, 1000],
+    categories: [],
+    minRating: 0,
+    sortBy: 'relevance',
+    inStock: false
+  });
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
         setError(null);
+        const searchParams = new URLSearchParams(location.search);
+        const query = searchParams.get('q') || '';
         
-        // Fetch all products
-        const response = await axios.get('https://fakestoreapi.com/products');
-        let filteredProducts = response.data;
+        // Fetch products from our backend API
+        const response = await axios.get(`http://localhost:5000/api/products`, {
+          params: {
+            q: query,
+            category: filters.categories.join(','),
+            minPrice: filters.priceRange[0],
+            maxPrice: filters.priceRange[1],
+            minRating: filters.minRating,
+            sortBy: filters.sortBy
+          }
+        });
 
-        // Filter by search query
-        if (searchQuery) {
-          const query = searchQuery.toLowerCase();
-          filteredProducts = filteredProducts.filter((product: Product) =>
-            product.title.toLowerCase().includes(query) ||
-            product.description.toLowerCase().includes(query) ||
-            product.category.toLowerCase().includes(query)
-          );
-        }
+        const fetchedProducts = response.data;
+        setProducts(fetchedProducts);
+        
+        // Set available categories and max price for filters
+        const categories = Array.from(new Set(fetchedProducts.map((p: Product) => p.category))) as string[];
+        setAvailableCategories(categories);
+        
+        const maxProductPrice = Math.max(...fetchedProducts.map((p: Product) => p.price));
+        setMaxPrice(maxProductPrice);
 
-        // Filter by category if specified
-        if (category) {
-          filteredProducts = filteredProducts.filter((product: Product) =>
-            product.category.toLowerCase().includes(category.toLowerCase())
-          );
-        }
-
-        // If no products found in API, add fallback products
-        if (filteredProducts.length === 0) {
-          filteredProducts = [
-            {
-              id: 'f1',
-              title: 'Premium Wireless Headphones',
-              price: 199.99,
-              description: 'High-quality wireless headphones with noise cancellation',
-              category: 'electronics',
-              image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e',
-              rating: { rate: 4.8, count: 250 }
-            },
-            // Add more fallback products as needed
-          ];
-        }
-
-        setProducts(filteredProducts);
+        // Apply initial filters
+        applyFilters(fetchedProducts, filters);
       } catch (err) {
-        setError('Failed to load products. Please try again later.');
         console.error('Error fetching products:', err);
+        setError('Failed to load products. Please try again later.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchProducts();
-  }, [searchQuery, category]);
+  }, [location.search, filters]);
+
+  const applyFilters = (productsToFilter: Product[], currentFilters: FilterState) => {
+    let filtered = [...productsToFilter];
+
+    // Apply price range filter
+    filtered = filtered.filter(product => 
+      product.price >= currentFilters.priceRange[0] && 
+      product.price <= currentFilters.priceRange[1]
+    );
+
+    // Apply category filter
+    if (currentFilters.categories.length > 0) {
+      filtered = filtered.filter(product =>
+        currentFilters.categories.includes(product.category)
+      );
+    }
+
+    // Apply rating filter
+    if (currentFilters.minRating > 0) {
+      filtered = filtered.filter(product =>
+        product.rating.rate >= currentFilters.minRating
+      );
+    }
+
+    // Apply stock filter
+    if (currentFilters.inStock) {
+      filtered = filtered.filter(product => (product.stock ?? 0) > 0);
+    }
+
+    // Apply sorting
+    switch (currentFilters.sortBy) {
+      case 'price-asc':
+        filtered.sort((a, b) => a.price - b.price);
+        break;
+      case 'price-desc':
+        filtered.sort((a, b) => b.price - a.price);
+        break;
+      case 'rating':
+        filtered.sort((a, b) => b.rating.rate - a.rating.rate);
+        break;
+      case 'newest':
+        filtered.sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
+        break;
+      default:
+        // Default sorting by relevance (handled by backend)
+        break;
+    }
+
+    setFilteredProducts(filtered);
+  };
 
   const handleProductClick = (productId: string) => {
     navigate(`/product/${productId}`);
+  };
+
+  const handleAddToCart = (e: React.MouseEvent, product: Product) => {
+    e.stopPropagation();
+    addToCart({
+      id: product._id || product.id,
+      title: product.title,
+      price: product.price,
+      image: product.image,
+      quantity: 1
+    });
   };
 
   if (loading) {
@@ -129,80 +199,72 @@ const SearchResultsPage: React.FC = () => {
 
   if (error) {
     return (
-      <Box sx={{ py: 4 }}>
-        <Container>
-          <Alert severity="error">{error}</Alert>
-        </Container>
-      </Box>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Alert severity="error">{error}</Alert>
+      </Container>
     );
   }
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Search Results
-        </Typography>
-        <Typography variant="subtitle1" color="text.secondary">
-          {products.length} results for "{searchQuery}"
-          {category && <Chip 
-            label={category.charAt(0).toUpperCase() + category.slice(1)} 
-            sx={{ ml: 2 }}
-            color="secondary"
-          />}
-        </Typography>
-      </Box>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Typography variant="h4" gutterBottom>
+        Search Results
+      </Typography>
+      
+      <Typography variant="body1" color="text.secondary" gutterBottom>
+        Found {filteredProducts.length} products
+      </Typography>
 
-      {products.length === 0 ? (
-        <Alert severity="info">
-          No products found matching your search criteria.
-        </Alert>
-      ) : (
-        <Grid container spacing={3}>
-          {products.map((product) => (
-            <Grid item key={product.id} xs={12} sm={6} md={4} lg={3}>
-              <ProductCard onClick={() => handleProductClick(product.id)}>
-                <ProductImage
-                  image={product.image}
-                  title={product.title}
-                />
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Typography 
-                    gutterBottom 
-                    variant="h6" 
-                    component="h2"
-                    sx={{
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      height: '3em',
-                      lineHeight: '1.5em',
-                    }}
-                  >
-                    {product.title}
+      <Grid container spacing={4}>
+        {filteredProducts.map((product) => (
+          <Grid item key={product._id || product.id} xs={12} sm={6} md={4}>
+            <Card
+              sx={{
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                cursor: 'pointer',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 4,
+                  transition: 'all 0.3s ease',
+                },
+              }}
+              onClick={() => handleProductClick(product._id || product.id)}
+            >
+              <CardMedia
+                component="img"
+                height="200"
+                image={product.image}
+                alt={product.title}
+                sx={{ objectFit: 'contain', p: 2 }}
+              />
+              <CardContent sx={{ flexGrow: 1 }}>
+                <Typography gutterBottom variant="h6" component="h3" noWrap>
+                  {product.title}
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <Rating value={product.rating.rate} precision={0.1} readOnly size="small" />
+                  <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+                    ({product.rating.count})
                   </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <Rating 
-                      value={product.rating.rate} 
-                      precision={0.1} 
-                      readOnly 
-                      size="small"
-                    />
-                    <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                      ({product.rating.count})
-                    </Typography>
-                  </Box>
-                  <Typography variant="h6" color="secondary" sx={{ fontWeight: 600 }}>
-                    ${product.price.toFixed(2)}
-                  </Typography>
-                </CardContent>
-              </ProductCard>
-            </Grid>
-          ))}
-        </Grid>
-      )}
+                </Box>
+                <Typography variant="h6" color="primary" gutterBottom>
+                  ${product.price.toFixed(2)}
+                </Typography>
+                <Button
+                  variant="contained"
+                  fullWidth
+                  onClick={(e) => handleAddToCart(e, product)}
+                  sx={{ mt: 2 }}
+                >
+                  Add to Cart
+                </Button>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
     </Container>
   );
 };

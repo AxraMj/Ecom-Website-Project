@@ -145,10 +145,20 @@ const HotProducts: React.FC = () => {
         setLoading(true);
         setError(null);
         const response = await axios.get('http://localhost:5000/api/products');
-        const sortedProducts = response.data
-          .sort((a: Product, b: Product) => b.rating.rate - a.rating.rate)
-          .slice(0, 8);
-        setProducts(sortedProducts);
+        
+        if (response.data.success) {
+          const products = response.data.products;
+          if (products.length > 0) {
+            const sortedProducts = products
+              .sort((a: Product, b: Product) => b.rating.rate - a.rating.rate)
+              .slice(0, 8);
+            setProducts(sortedProducts);
+          } else {
+            setError('No products found. Please try again later.');
+          }
+        } else {
+          setError('Failed to load products. Please try again later.');
+        }
       } catch (err) {
         setError('Failed to load products. Please try again later.');
         console.error('Error fetching products:', err);

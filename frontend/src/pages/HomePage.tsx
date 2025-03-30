@@ -4,7 +4,6 @@ import Banner from '../components/Banner';
 import HotProducts from '../components/HotProducts';
 import FeaturedProducts from '../components/FeaturedProducts';
 import ElectronicsProducts from '../components/ElectronicsProducts';
-import ShoesProducts from '../components/ShoesProducts';
 import Gadgets from '../components/Gadgets';
 
 const HomePage: React.FC = () => {
@@ -17,7 +16,6 @@ const HomePage: React.FC = () => {
       <HotProducts />
       <FeaturedProducts />
       <ElectronicsProducts />
-      <ShoesProducts />
       <Gadgets />
     </Box>
   );

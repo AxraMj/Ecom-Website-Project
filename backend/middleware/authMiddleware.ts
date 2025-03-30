@@ -54,6 +54,17 @@ export const protect = async (
   }
 };
 
+export const authorizeRoles = (...roles: string[]) => {
+  return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({
+        message: `Role (${req.user?.role || 'unknown'}) is not allowed to access this resource`
+      });
+    }
+    next();
+  };
+};
+
 export const generateToken = (id: string) => {
   return jwt.sign({ id }, process.env.JWT_SECRET || 'fallback_secret', {
     expiresIn: '30d',

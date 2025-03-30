@@ -145,98 +145,42 @@ const ShoesProducts: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        // Since the API doesn't have a specific shoes category, we'll filter from all products
-        const response = await axios.get('https://fakestoreapi.com/products');
-        const shoesProducts = response.data.filter((product: Product) => 
-          product.title.toLowerCase().includes('sneaker') || 
-          product.title.toLowerCase().includes('shoe') ||
-          product.category.toLowerCase().includes('shoes')
-        );
-        setProducts(shoesProducts.length > 0 ? shoesProducts : [
-          {
-            id: 'shoe1',
-            title: 'Classic Running Sneakers',
-            price: 89.99,
-            rating: { rate: 4.5, count: 120 },
-            image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff',
-            category: 'shoes'
-          },
-          {
-            id: 'shoe2',
-            title: 'Sport Training Shoes',
-            price: 79.99,
-            rating: { rate: 4.3, count: 95 },
-            image: 'https://images.unsplash.com/photo-1608231387042-66d1773070a5',
-            category: 'shoes'
-          },
-          {
-            id: 'shoe3',
-            title: 'Casual Walking Shoes',
-            price: 69.99,
-            rating: { rate: 4.7, count: 150 },
-            image: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a',
-            category: 'shoes'
-          },
-          {
-            id: 'shoe4',
-            title: 'Lifestyle Sneakers',
-            price: 99.99,
-            rating: { rate: 4.6, count: 200 },
-            image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772',
-            category: 'shoes'
-          },
-          {
-            id: 'shoe5',
-            title: 'Premium Basketball Shoes',
-            price: 129.99,
-            rating: { rate: 4.8, count: 180 },
-            image: 'https://images.unsplash.com/photo-1578116922645-3976907a7671',
-            category: 'shoes'
-          },
-          {
-            id: 'shoe6',
-            title: 'Lightweight Running Shoes',
-            price: 94.99,
-            rating: { rate: 4.4, count: 165 },
-            image: 'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa',
-            category: 'shoes'
-          },
-          {
-            id: 'shoe7',
-            title: 'Urban Street Sneakers',
-            price: 84.99,
-            rating: { rate: 4.5, count: 210 },
-            image: 'https://images.unsplash.com/photo-1560769629-975ec94e6a86',
-            category: 'shoes'
-          },
-          {
-            id: 'shoe8',
-            title: 'Hiking Trail Shoes',
-            price: 119.99,
-            rating: { rate: 4.7, count: 145 },
-            image: 'https://images.unsplash.com/photo-1606185540834-d6e7483ee1a4',
-            category: 'shoes'
-          },
-          {
-            id: 'shoe9',
-            title: 'Fashion Canvas Sneakers',
-            price: 59.99,
-            rating: { rate: 4.3, count: 230 },
-            image: 'https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77',
-            category: 'shoes'
-          },
-          {
-            id: 'shoe10',
-            title: 'Professional Tennis Shoes',
-            price: 109.99,
-            rating: { rate: 4.6, count: 175 },
-            image: 'https://images.unsplash.com/photo-1562183241-840b8af0721e',
-            category: 'shoes'
+        console.log('Fetching shoes products...');
+        const response = await axios.get('http://localhost:5000/api/products?category=fashion');
+        
+        if (response.data.success) {
+          const allProducts = response.data.products;
+          console.log('All fashion products:', allProducts);
+          
+          // Filter shoes products with more inclusive criteria
+          const shoesProducts = allProducts.filter((product: Product) => {
+            const title = product.title.toLowerCase();
+            return (
+              title.includes('nike') || 
+              title.includes('adidas') ||
+              title.includes('puma') ||
+              title.includes('reebok') ||
+              title.includes('balance') ||
+              title.includes('sneaker') ||
+              title.includes('shoe') ||
+              title.includes('footwear') ||
+              product.id.startsWith('shoe_')
+            );
+          });
+          
+          console.log('Filtered shoes products:', shoesProducts);
+          
+          if (shoesProducts.length > 0) {
+            setProducts(shoesProducts);
+          } else {
+            setError('No shoes products found. Please check back later.');
           }
-        ]);
+        } else {
+          setError('Failed to load shoes products. Please try again later.');
+        }
       } catch (err) {
+        console.error('Error fetching shoes products:', err);
         setError('Failed to load shoes products. Please try again later.');
-        console.error('Error fetching products:', err);
       } finally {
         setLoading(false);
       }

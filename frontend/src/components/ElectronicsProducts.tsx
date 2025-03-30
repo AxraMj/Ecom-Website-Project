@@ -1,14 +1,27 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Box, Container, Typography, Card, CardMedia, CardContent, CardActions, Button, Rating, CircularProgress, Alert, IconButton, Snackbar } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import {
+  Box,
+  Container,
+  Typography,
+  Grid,
+  Card,
+  CardMedia,
+  CardContent,
+  Rating,
+  Button,
+  CircularProgress,
+  Alert,
+  IconButton,
+} from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
-import { useAuth } from '../contexts/AuthContext';
 
 interface Product {
   id: string;
+  _id?: string;  // MongoDB ID
   title: string;
   price: number;
   rating: {
@@ -20,136 +33,53 @@ interface Product {
 }
 
 const ProductCard = styled(Card)(({ theme }) => ({
-  width: '250px',
   height: '100%',
   display: 'flex',
   flexDirection: 'column',
-  transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
-  flexShrink: 0,
-  margin: theme.spacing(0, 1),
-  borderRadius: '8px',
-  backgroundColor: '#fff',
+  transition: 'transform 0.2s ease-in-out',
   '&:hover': {
-    transform: 'translateY(-4px)',
-    boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+    transform: 'translateY(-5px)',
+    boxShadow: theme.shadows[4],
   },
-}));
-
-const ScrollContainer = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  overflowX: 'auto',
-  scrollBehavior: 'smooth',
-  '&::-webkit-scrollbar': {
-    display: 'none'
-  },
-  msOverflowStyle: 'none',
-  scrollbarWidth: 'none',
-  position: 'relative',
-  padding: theme.spacing(1, 0),
-}));
-
-const ScrollButton = styled(IconButton)(({ theme }) => ({
-  position: 'absolute',
-  top: '50%',
-  transform: 'translateY(-50%)',
-  backgroundColor: theme.palette.secondary.main,
-  color: '#fff',
-  zIndex: 2,
-  '&:hover': {
-    backgroundColor: theme.palette.secondary.dark,
-  },
-  boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
 }));
 
 const ProductImage = styled(CardMedia)({
-  paddingTop: '75%',
-  backgroundSize: 'contain',
-  backgroundColor: '#f5f5f5',
+  paddingTop: '56.25%', // 16:9
+  position: 'relative',
 });
 
-const ProductPrice = styled(Typography)(({ theme }) => ({
-  color: theme.palette.primary.main,
-  fontWeight: 600,
-  fontSize: '1.25rem',
-}));
-
-const LoadingContainer = styled(Box)({
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  minHeight: '300px',
+const PriceTypography = styled(Typography)({
+  fontWeight: 'bold',
+  color: '#2e7d32',
 });
 
 const ElectronicsProducts: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [showLeftArrow, setShowLeftArrow] = useState(false);
-  const [showRightArrow, setShowRightArrow] = useState(true);
   const navigate = useNavigate();
   const { addToCart } = useCart();
-  const { isAuthenticated } = useAuth();
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-
-  const handleScroll = () => {
-    if (scrollContainerRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
-      setShowLeftArrow(scrollLeft > 0);
-      setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
-    }
-  };
-
-  const scroll = (direction: 'left' | 'right') => {
-    if (scrollContainerRef.current) {
-      const scrollAmount = 600;
-      const newScrollLeft = scrollContainerRef.current.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
-      scrollContainerRef.current.scrollTo({
-        left: newScrollLeft,
-        behavior: 'smooth'
-      });
-    }
-  };
-
-  const handleProductClick = (productId: string) => {
-    navigate(`/product/${productId}`);
-  };
-
-  const handleAddToCart = (e: React.MouseEvent, product: Product) => {
-    e.stopPropagation();
-    
-    if (!isAuthenticated) {
-      setSnackbarMessage('Please log in to add items to cart');
-      setSnackbarOpen(true);
-      return;
-    }
-
-    addToCart({
-      id: product.id,
-      title: product.title,
-      price: product.price,
-      image: product.image,
-      quantity: 1
-    });
-    setSnackbarMessage('Product added to cart');
-    setSnackbarOpen(true);
-  };
-
-  const handleSnackbarClose = () => {
-    setSnackbarOpen(false);
-  };
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await axios.get('http://localhost:5000/api/products/category/electronics');
-        setProducts(response.data);
+        const response = await axios.get('http://localhost:5000/api/products?category=electronics');
+        
+        if (response.data.success) {
+          const products = response.data.products;
+          if (products.length > 0) {
+            setProducts(products);
+          } else {
+            setError('No electronics products found. Please try again later.');
+          }
+        } else {
+          setError('Failed to load electronics products. Please try again later.');
+        }
       } catch (err) {
+        console.error('Error fetching electronics products:', err);
         setError('Failed to load electronics products. Please try again later.');
-        console.error('Error fetching products:', err);
       } finally {
         setLoading(false);
       }
@@ -158,18 +88,35 @@ const ElectronicsProducts: React.FC = () => {
     fetchProducts();
   }, []);
 
+  const handleProductClick = (productId: string) => {
+    navigate(`/product/${productId}`);
+  };
+
+  const handleAddToCart = (e: React.MouseEvent, product: Product) => {
+    e.stopPropagation();
+    addToCart({
+      id: product._id || product.id,
+      title: product.title,
+      price: product.price,
+      image: product.image,
+      quantity: 1
+    });
+  };
+
   if (loading) {
     return (
-      <LoadingContainer>
-        <CircularProgress color="secondary" />
-      </LoadingContainer>
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+        <CircularProgress />
+      </Box>
     );
   }
 
   if (error) {
     return (
-      <Box sx={{ p: 3 }}>
-        <Alert severity="error">{error}</Alert>
+      <Box sx={{ py: 4 }}>
+        <Container>
+          <Alert severity="error">{error}</Alert>
+        </Container>
       </Box>
     );
   }
@@ -186,18 +133,18 @@ const ElectronicsProducts: React.FC = () => {
           variant="h4"
           component="h2"
           sx={{
-            mb: 3,
-            fontWeight: 700,
-            textAlign: 'left',
-            color: '#2C3E50',
+            mb: 4,
+            fontWeight: 800,
+            color: '#1a1a1a',
             position: 'relative',
+            pl: { xs: 2, md: 4 },
             '&::after': {
               content: '""',
               display: 'block',
-              width: '60px',
+              width: '80px',
               height: '4px',
-              backgroundColor: 'secondary.main',
-              margin: '12px 0',
+              background: 'linear-gradient(90deg, #1a1a1a 0%, #666 100%)',
+              margin: '16px 0',
               borderRadius: '2px',
             },
           }}
@@ -205,68 +152,38 @@ const ElectronicsProducts: React.FC = () => {
           Electronics
         </Typography>
 
-        <Box sx={{ position: 'relative' }}>
-          {showLeftArrow && (
-            <ScrollButton
-              onClick={() => scroll('left')}
-              sx={{ left: 0 }}
-              size="large"
-            >
-              <ChevronLeft />
-            </ScrollButton>
-          )}
-          
-          <ScrollContainer
-            ref={scrollContainerRef}
-            onScroll={handleScroll}
-          >
-            {products.map((product) => (
-              <ProductCard 
-                key={product.id}
-                onClick={() => handleProductClick(product.id)}
+        <Grid container spacing={4}>
+          {products.map((product) => (
+            <Grid item key={product._id || product.id} xs={12} sm={6} md={4}>
+              <ProductCard
                 sx={{
                   cursor: 'pointer',
+                  '&:hover': {
+                    transform: 'translateY(-5px)',
+                    boxShadow: 4,
+                  },
                 }}
+                onClick={() => handleProductClick(product._id || product.id)}
               >
                 <ProductImage
                   image={product.image}
                   title={product.title}
                 />
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Typography 
-                    gutterBottom 
-                    variant="h6" 
-                    component="h3" 
-                    sx={{
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      lineHeight: 1.2,
-                      height: '2.4em',
-                      color: '#2C3E50',
-                    }}
-                  >
+                <CardContent>
+                  <Typography gutterBottom variant="h6" component="h3">
                     {product.title}
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <Rating 
-                      value={product.rating.rate} 
-                      precision={0.1} 
-                      readOnly 
-                      size="small"
-                      sx={{ color: theme => theme.palette.secondary.main }}
-                    />
+                    <Rating value={product.rating.rate} precision={0.1} readOnly size="small" />
                     <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
                       ({product.rating.count})
                     </Typography>
                   </Box>
-                  <ProductPrice>
+                  <PriceTypography variant="h6">
                     ${product.price.toFixed(2)}
-                  </ProductPrice>
+                  </PriceTypography>
                 </CardContent>
-                <CardActions sx={{ mt: 'auto' }}>
+                <Box sx={{ p: 2 }}>
                   <Button 
                     size="large" 
                     sx={{ 
@@ -279,30 +196,14 @@ const ElectronicsProducts: React.FC = () => {
                     }}
                     onClick={(e) => handleAddToCart(e, product)}
                   >
-                    {isAuthenticated ? 'Add to Cart' : 'Login to Add to Cart'}
+                    Add to Cart
                   </Button>
-                </CardActions>
+                </Box>
               </ProductCard>
-            ))}
-          </ScrollContainer>
-
-          {showRightArrow && (
-            <ScrollButton
-              onClick={() => scroll('right')}
-              sx={{ right: 0 }}
-              size="large"
-            >
-              <ChevronRight />
-            </ScrollButton>
-          )}
-        </Box>
+            </Grid>
+          ))}
+        </Grid>
       </Container>
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={3000}
-        onClose={handleSnackbarClose}
-        message={snackbarMessage}
-      />
     </Box>
   );
 };

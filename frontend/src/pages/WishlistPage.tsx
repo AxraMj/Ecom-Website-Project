@@ -13,20 +13,25 @@ import {
 import { useWishlist } from '../contexts/WishlistContext';
 import { useCart } from '../contexts/CartContext';
 import { useNavigate } from 'react-router-dom';
+import { WishlistItem } from '../contexts/WishlistContext';
 
 const WishlistPage: React.FC = () => {
   const { items, removeFromWishlist } = useWishlist();
   const { addToCart } = useCart();
   const navigate = useNavigate();
 
-  const handleAddToCart = (item: any) => {
-    addToCart({
+  const handleAddToCart = (item: WishlistItem) => {
+    // Create a cart item with the correct structure
+    const cartItem = {
       id: item.id,
       title: item.title,
       price: item.price,
       image: item.image,
       quantity: 1
-    });
+    };
+
+    // Add to cart and remove from wishlist
+    addToCart(cartItem);
     removeFromWishlist(item.id);
   };
 

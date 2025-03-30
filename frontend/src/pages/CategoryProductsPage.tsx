@@ -203,179 +203,24 @@ const CategoryProductsPage: React.FC = () => {
         
         const searchCategory = category?.toLowerCase().trim() || '';
 
-        // Fallback products for categories not in the API
-        const fallbackProducts: { [key: string]: Product[] } = {
-          'furniture': [
-            {
-              id: 'f1',
-              title: 'Modern Sofa Set',
-              price: 899.99,
-              category: 'furniture',
-              image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc',
-              rating: { rate: 4.8, count: 120 }
-            },
-            {
-              id: 'f2',
-              title: 'Dining Table Set',
-              price: 649.99,
-              category: 'furniture',
-              image: 'https://images.unsplash.com/photo-1617104662896-5090099d799d',
-              rating: { rate: 4.6, count: 95 }
-            },
-            {
-              id: 'f3',
-              title: 'Queen Size Bed Frame',
-              price: 499.99,
-              category: 'furniture',
-              image: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85',
-              rating: { rate: 4.7, count: 150 }
-            },
-            {
-              id: 'f4',
-              title: 'Kitchen Cabinet Set',
-              price: 1299.99,
-              category: 'furniture',
-              image: 'https://images.unsplash.com/photo-1556910103-1c02745aae4d',
-              rating: { rate: 4.9, count: 80 }
-            }
-          ],
-          'grocery': [
-            {
-              id: 'g1',
-              title: 'Organic Fresh Produce Bundle',
-              price: 49.99,
-              category: 'grocery',
-              image: 'https://images.unsplash.com/photo-1610348725531-843dff563e2c',
-              rating: { rate: 4.5, count: 200 }
-            },
-            {
-              id: 'g2',
-              title: 'Gourmet Coffee Selection',
-              price: 34.99,
-              category: 'grocery',
-              image: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e',
-              rating: { rate: 4.7, count: 150 }
-            },
-            {
-              id: 'g3',
-              title: 'Artisan Bread Collection',
-              price: 24.99,
-              category: 'grocery',
-              image: 'https://images.unsplash.com/photo-1608198093002-ad4e005484ec',
-              rating: { rate: 4.6, count: 180 }
-            }
-          ],
-          'beauty': [
-            {
-              id: 'b1',
-              title: 'Luxury Skincare Set',
-              price: 129.99,
-              category: 'beauty',
-              image: 'https://images.unsplash.com/photo-1612817288484-6f916006741a',
-              rating: { rate: 4.8, count: 220 }
-            },
-            {
-              id: 'b2',
-              title: 'Premium Makeup Collection',
-              price: 89.99,
-              category: 'beauty',
-              image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348',
-              rating: { rate: 4.6, count: 190 }
-            },
-            {
-              id: 'b3',
-              title: 'Natural Hair Care Bundle',
-              price: 59.99,
-              category: 'beauty',
-              image: 'https://images.unsplash.com/photo-1526947425960-945c6e72858f',
-              rating: { rate: 4.7, count: 170 }
-            }
-          ],
-          'books': [
-            {
-              id: 'bk1',
-              title: 'Bestseller Fiction Collection',
-              price: 79.99,
-              category: 'books',
-              image: 'https://images.unsplash.com/photo-1524578271613-d550eacf6090',
-              rating: { rate: 4.9, count: 250 }
-            },
-            {
-              id: 'bk2',
-              title: 'Business & Leadership Bundle',
-              price: 89.99,
-              category: 'books',
-              image: 'https://images.unsplash.com/photo-1589998059171-988d887df646',
-              rating: { rate: 4.7, count: 180 }
-            },
-            {
-              id: 'bk3',
-              title: 'Self-Development Collection',
-              price: 69.99,
-              category: 'books',
-              image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c',
-              rating: { rate: 4.8, count: 210 }
-            }
-          ]
-        };
-
-        // Check if we have fallback products for this category
-        if (fallbackProducts[searchCategory]) {
-          setProducts(fallbackProducts[searchCategory]);
-          const prices = fallbackProducts[searchCategory].map(p => p.price);
-          const minPrice = Math.floor(Math.min(...prices));
-          const maxPrice = Math.ceil(Math.max(...prices));
-          setPriceRange([minPrice, maxPrice]);
-          setFilters(prev => ({ ...prev, priceRange: [minPrice, maxPrice] }));
-          applyFilters(fallbackProducts[searchCategory], { ...filters, priceRange: [minPrice, maxPrice] });
-          return;
-        }
-
-        // If no fallback products, try the API
-        const response = await axios.get('https://fakestoreapi.com/products');
-        const categoryAliases: { [key: string]: string[] } = {
-          'electronics': ['electronics', 'gadget', 'device', 'tech', 'digital'],
-          'fashion': ['clothing', 'fashion', 'apparel', "men's clothing", "women's clothing"],
-          'jewelry': ['jewelry', 'accessories', 'jewellery'],
-        };
-
-        const filteredProducts = response.data.filter((product: Product) => {
-          const productCategory = product.category.toLowerCase().trim();
-          const productTitle = product.title.toLowerCase().trim();
-
-          // Check if the product category directly matches the search category
-          if (productCategory === searchCategory) {
-            return true;
+        // Fetch products from our database API
+        const response = await axios.get(`http://localhost:5000/api/products?category=${searchCategory}`);
+        
+        if (response.data.success) {
+          const products = response.data.products;
+          if (products.length > 0) {
+            setProducts(products);
+            const prices = products.map((p: Product) => p.price);
+            const minPrice = Math.floor(Math.min(...prices));
+            const maxPrice = Math.ceil(Math.max(...prices));
+            setPriceRange([minPrice, maxPrice]);
+            setFilters(prev => ({ ...prev, priceRange: [minPrice, maxPrice] }));
+            applyFilters(products, { ...filters, priceRange: [minPrice, maxPrice] });
+          } else {
+            setError(`No products found in "${category}" category. Try browsing a different category.`);
           }
-
-          // Check if the search category matches any of our defined categories
-          for (const [mainCategory, aliases] of Object.entries(categoryAliases)) {
-            if (searchCategory === mainCategory || aliases.some(alias => searchCategory.includes(alias))) {
-              return aliases.some(alias => 
-                productCategory.includes(alias) || 
-                productTitle.includes(alias)
-              );
-            }
-          }
-
-          // Fallback to partial matches
-          return productCategory.includes(searchCategory) || 
-                 searchCategory.includes(productCategory) ||
-                 productTitle.includes(searchCategory) ||
-                 productCategory.split(' ').some(word => searchCategory.includes(word)) ||
-                 searchCategory.split(' ').some(word => productCategory.includes(word));
-        });
-
-        if (filteredProducts.length === 0) {
-          setError(`No products found in "${category}" category. Try browsing a different category.`);
         } else {
-          setProducts(filteredProducts);
-          const prices = filteredProducts.map((p: Product) => p.price);
-          const minPrice = Math.floor(Math.min(...prices));
-          const maxPrice = Math.ceil(Math.max(...prices));
-          setPriceRange([minPrice, maxPrice]);
-          setFilters(prev => ({ ...prev, priceRange: [minPrice, maxPrice] }));
-          applyFilters(filteredProducts, { ...filters, priceRange: [minPrice, maxPrice] });
+          setError('Failed to load products. Please try again later.');
         }
       } catch (err) {
         setError('Failed to load products. Please try again later.');

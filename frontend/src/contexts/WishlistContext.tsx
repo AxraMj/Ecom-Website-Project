@@ -4,6 +4,7 @@ import { useAuth } from './AuthContext';
 
 export interface WishlistItem {
   id: string;
+  productId: string;
   title: string;
   price: number;
   image: string;

@@ -19,6 +19,9 @@ import {
   CircularProgress,
   Alert,
   Snackbar,
+  Card,
+  CardMedia,
+  CardContent,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { FavoriteBorder, Favorite } from '@mui/icons-material';
@@ -116,173 +119,44 @@ const ProductDetailPage: React.FC = () => {
 
   const sizes = ['S', 'M', 'L', 'XL', 'XXL'];
 
-  // Fallback products data
-  const fallbackProducts: { [key: string]: Product[] } = {
-    'furniture': [
-      {
-        id: 'f1',
-        title: 'Modern Sofa Set',
-        price: 899.99,
-        description: 'Elegant and comfortable modern sofa set perfect for your living room. Features high-quality fabric upholstery and solid wood frame.',
-        category: 'furniture',
-        image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc',
-        rating: { rate: 4.8, count: 120 }
-      },
-      {
-        id: 'f2',
-        title: 'Dining Table Set',
-        price: 649.99,
-        description: 'Contemporary dining table set with 6 chairs. Made from premium materials with a beautiful finish.',
-        category: 'furniture',
-        image: 'https://images.unsplash.com/photo-1617104662896-5090099d799d',
-        rating: { rate: 4.6, count: 95 }
-      },
-      {
-        id: 'f3',
-        title: 'Queen Size Bed Frame',
-        price: 499.99,
-        description: 'Sturdy queen size bed frame with modern design. Includes headboard and support system.',
-        category: 'furniture',
-        image: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85',
-        rating: { rate: 4.7, count: 150 }
-      },
-      {
-        id: 'f4',
-        title: 'Kitchen Cabinet Set',
-        price: 1299.99,
-        description: 'Complete kitchen cabinet set with modern design and ample storage space.',
-        category: 'furniture',
-        image: 'https://images.unsplash.com/photo-1556910103-1c02745aae4d',
-        rating: { rate: 4.9, count: 80 }
-      }
-    ],
-    'grocery': [
-      {
-        id: 'g1',
-        title: 'Organic Fresh Produce Bundle',
-        price: 49.99,
-        description: 'Fresh, organic produce bundle including seasonal vegetables and fruits.',
-        category: 'grocery',
-        image: 'https://images.unsplash.com/photo-1610348725531-843dff563e2c',
-        rating: { rate: 4.5, count: 200 }
-      },
-      {
-        id: 'g2',
-        title: 'Gourmet Coffee Selection',
-        price: 34.99,
-        description: 'Premium coffee beans from various regions, carefully selected for coffee enthusiasts.',
-        category: 'grocery',
-        image: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e',
-        rating: { rate: 4.7, count: 150 }
-      },
-      {
-        id: 'g3',
-        title: 'Artisan Bread Collection',
-        price: 24.99,
-        description: 'Freshly baked artisan bread collection featuring various types of bread.',
-        category: 'grocery',
-        image: 'https://images.unsplash.com/photo-1608198093002-ad4e005484ec',
-        rating: { rate: 4.6, count: 180 }
-      }
-    ],
-    'beauty': [
-      {
-        id: 'b1',
-        title: 'Luxury Skincare Set',
-        price: 129.99,
-        description: 'Complete luxury skincare set with cleanser, toner, serum, and moisturizer.',
-        category: 'beauty',
-        image: 'https://images.unsplash.com/photo-1612817288484-6f916006741a',
-        rating: { rate: 4.8, count: 220 }
-      },
-      {
-        id: 'b2',
-        title: 'Premium Makeup Collection',
-        price: 89.99,
-        description: 'High-end makeup collection featuring eyeshadows, lipsticks, and face products.',
-        category: 'beauty',
-        image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348',
-        rating: { rate: 4.6, count: 190 }
-      },
-      {
-        id: 'b3',
-        title: 'Natural Hair Care Bundle',
-        price: 59.99,
-        description: 'Natural and organic hair care products for all hair types.',
-        category: 'beauty',
-        image: 'https://images.unsplash.com/photo-1526947425960-945c6e72858f',
-        rating: { rate: 4.7, count: 170 }
-      }
-    ],
-    'books': [
-      {
-        id: 'bk1',
-        title: 'Bestseller Fiction Collection',
-        price: 79.99,
-        description: 'Collection of top-rated fiction books from renowned authors.',
-        category: 'books',
-        image: 'https://images.unsplash.com/photo-1524578271613-d550eacf6090',
-        rating: { rate: 4.9, count: 250 }
-      },
-      {
-        id: 'bk2',
-        title: 'Business & Leadership Bundle',
-        price: 89.99,
-        description: 'Essential business and leadership books for professional development.',
-        category: 'books',
-        image: 'https://images.unsplash.com/photo-1589998059171-988d887df646',
-        rating: { rate: 4.7, count: 180 }
-      },
-      {
-        id: 'bk3',
-        title: 'Self-Development Collection',
-        price: 69.99,
-        description: 'Curated collection of self-help and personal development books.',
-        category: 'books',
-        image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c',
-        rating: { rate: 4.8, count: 210 }
-      }
-    ]
-  };
-
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         setLoading(true);
         setError(null);
-
-        if (!id) {
-          throw new Error('Product ID is required');
-        }
-
-        // Try to fetch from our backend API
-        const response = await axios.get(`http://localhost:5000/api/products/${id}`);
-        if (response.data) {
-          const productData = {
-            ...response.data,
-            id: response.data.id || response.data._id // Use the id from the backend
-          };
+        console.log('Fetching product with ID:', id);
+        
+        const response = await axios.get(`http://localhost:5000/api/products/product/${id}`);
+        console.log('Product response:', response.data);
+        
+        if (response.data.success && response.data.product) {
+          const productData = response.data.product;
           setProduct(productData);
+          setIsInWishlistState(isInWishlist(productData.id));
           
-          // Get recommended products from the same category
-          const recommendedResponse = await axios.get(`http://localhost:5000/api/products/category/${response.data.category}`);
-          const filteredRecommended = recommendedResponse.data
-            .filter((p: Product) => {
-              const productId = p.id || p._id;
-              const currentId = productData.id || productData._id;
-              return productId?.toString() !== currentId?.toString();
-            })
-            .map((p: Product) => ({
-              ...p,
-              id: p.id || p._id // Ensure each recommended product has an id field
-            }))
-            .slice(0, 4);
-          setRecommendedProducts(filteredRecommended);
+          // Fetch recommended products from the same category
+          try {
+            const categoryResponse = await axios.get(`http://localhost:5000/api/products?category=${productData.category}`);
+            if (categoryResponse.data.success) {
+              const recommended = categoryResponse.data.products
+                .filter((p: Product) => p.id !== productData.id)
+                .slice(0, 4);
+              setRecommendedProducts(recommended);
+            }
+          } catch (categoryError) {
+            console.error('Error fetching recommended products:', categoryError);
+            // Don't set error state for recommended products failure
+          }
+        } else {
+          setError(response.data.message || 'Product not found');
         }
-      } catch (err: any) {
-        const errorMessage = err.response?.data?.message || err.message || 'Failed to load product details';
-        setError(errorMessage);
+      } catch (err) {
         console.error('Error fetching product:', err);
+        if (axios.isAxiosError(err) && err.response) {
+          setError(err.response.data.message || 'Failed to load product details. Please try again later.');
+        } else {
+          setError('Failed to load product details. Please try again later.');
+        }
       } finally {
         setLoading(false);
       }
@@ -291,13 +165,7 @@ const ProductDetailPage: React.FC = () => {
     if (id) {
       fetchProduct();
     }
-  }, [id]);
-
-  useEffect(() => {
-    if (product) {
-      setIsInWishlistState(isInWishlist(product.id));
-    }
-  }, [product, isInWishlist]);
+  }, [id, isInWishlist]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -307,10 +175,6 @@ const ProductDetailPage: React.FC = () => {
     setSelectedSize(size);
   };
 
-  const toggleWishlist = () => {
-    setIsWishlisted(!isWishlisted);
-  };
-
   const handleAddToCart = () => {
     if (!isAuthenticated) {
       setSnackbarMessage('Please log in to add items to cart');
@@ -318,63 +182,44 @@ const ProductDetailPage: React.FC = () => {
       return;
     }
 
-    if (product) {
-      console.log('Adding product to cart:', {  // Debug log
-        id: product.id,
-        title: product.title,
-        price: product.price,
-        image: product.image,
-        quantity: 1
-      });
-      
-      addToCart({
-        id: product.id,
-        title: product.title,
-        price: product.price,
-        image: product.image,
-        quantity: 1
-      });
-      setSnackbarMessage('Product added to cart');
-      setSnackbarOpen(true);
-    }
+    if (!product) return;
+
+    addToCart({
+      id: product.id,
+      title: product.title,
+      price: product.price,
+      image: product.image,
+      quantity: 1
+    });
+    setSnackbarMessage('Product added to cart');
+    setSnackbarOpen(true);
   };
 
-  const handleSnackbarClose = () => {
-    setSnackbarOpen(false);
-  };
-
-  const handleWishlistClick = async () => {
-    if (!isAuthenticated) {
-      setSnackbarMessage('Please log in to add items to wishlist');
-      setSnackbarOpen(true);
+  const handleWishlistToggle = () => {
+    if (!product) {
+      setSnackbarMessage('Product not found');
       return;
     }
 
-    try {
-      if (product) {
-        if (isInWishlistState) {
-          await removeFromWishlist(product.id);
-          setSnackbarMessage('Removed from wishlist');
-        } else {
-          await addToWishlist({
-            id: product.id,
-            title: product.title,
-            price: product.price,
-            image: product.image,
-            category: product.category,
-            description: product.description,
-            rating: product.rating
-          });
-          setSnackbarMessage('Added to wishlist');
-        }
-        setIsInWishlistState(!isInWishlistState);
-        setSnackbarOpen(true);
-      }
-    } catch (error: any) {
-      console.error('Wishlist error:', error);
-      setSnackbarMessage(error.response?.data?.message || 'Error updating wishlist');
-      setSnackbarOpen(true);
+    if (isInWishlistState) {
+      removeFromWishlist(product.id);
+      setIsInWishlistState(false);
+      setSnackbarMessage('Product removed from wishlist');
+    } else {
+      addToWishlist({
+        id: product.id,
+        productId: product.id,
+        title: product.title,
+        price: product.price,
+        image: product.image,
+        category: product.category,
+        description: product.description,
+        rating: product.rating
+      });
+      setIsInWishlistState(true);
+      setSnackbarMessage('Product added to wishlist');
     }
+    setSnackbarOpen(true);
   };
 
   if (loading) {
@@ -387,199 +232,162 @@ const ProductDetailPage: React.FC = () => {
 
   if (error || !product) {
     return (
-      <Box sx={{ p: 3 }}>
-        <Container>
-          <Alert severity="error">{error || 'Product not found'}</Alert>
-        </Container>
-      </Box>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Alert severity="error">{error || 'Product not found'}</Alert>
+      </Container>
     );
   }
 
   return (
-    <Container maxWidth="xl" sx={{ py: 6 }}>
-      <Grid container spacing={6}>
-        <Grid container spacing={4}>
-          <Grid item xs={12} md={6}>
-            <ProductImage src={product.image} alt={product.title} />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-              <Typography variant="h4" component="h1">
-                {product.title}
-              </Typography>
-              <IconButton
-                onClick={handleWishlistClick}
-                color="secondary"
-                aria-label="add to wishlist"
-                sx={{ 
-                  '&:hover': {
-                    backgroundColor: 'transparent',
-                  }
-                }}
-              >
-                {isInWishlistState ? <FavoriteIcon /> : <FavoriteBorderIcon />}
-              </IconButton>
-            </Box>
-            
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <Rating value={product.rating.rate} precision={0.1} readOnly />
-              <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-                ({product.rating.count} reviews)
-              </Typography>
-            </Box>
-
-            <Typography variant="h5" color="primary" sx={{ mb: 2 }}>
-              ${product.price.toFixed(2)}
-            </Typography>
-
-            {product.stock !== undefined && (
-              <Typography 
-                variant="body1" 
-                sx={{ 
-                  mb: 2,
-                  color: product.stock > 0 ? 'success.main' : 'error.main'
-                }}
-              >
-                {product.stock > 0 ? `In Stock (${product.stock} available)` : 'Out of Stock'}
-              </Typography>
-            )}
-
-            <Chip 
-              label={product.category} 
-              color="secondary" 
-              sx={{ mb: 2 }}
-            />
-
-            {product.isFeatured && (
-              <Chip 
-                label="Featured Product" 
-                color="primary" 
-                sx={{ mb: 2, ml: 1 }}
-              />
-            )}
-
-            <Typography variant="body1" sx={{ mb: 3 }}>
-              {product.description}
-            </Typography>
-
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-              <Button
-                variant="contained"
-                color="primary"
-                size="large"
-                onClick={handleAddToCart}
-                startIcon={<ShoppingCartIcon />}
-              >
-                Add to Cart
-              </Button>
-            </Box>
-
-            {/* Size Selection */}
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="h6" sx={{ mb: 2 }}>Select Size</Typography>
-              <Box>
-                {sizes.map((size) => (
-                  <SizeButton
-                    key={size}
-                    variant="outlined"
-                    className={selectedSize === size ? 'selected' : ''}
-                    onClick={() => handleSizeChange(size)}
-                  >
-                    {size}
-                  </SizeButton>
-                ))}
-              </Box>
-            </Box>
-
-            {/* Tabs */}
-            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-              <Tabs value={tabValue} onChange={handleTabChange}>
-                <Tab label="Details" />
-                <Tab label="Reviews" />
-                <Tab label="Size & Fit" />
-              </Tabs>
-            </Box>
-
-            <TabPanel value={tabValue} index={0}>
-              <Typography variant="body1">{product.description}</Typography>
-            </TabPanel>
-
-            <TabPanel value={tabValue} index={1}>
-              <Typography variant="body1">
-                Average Rating: {product.rating.rate}/5 ({product.rating.count} reviews)
-              </Typography>
-              {/* Add review list component here */}
-            </TabPanel>
-
-            <TabPanel value={tabValue} index={2}>
-              <Typography variant="body1">
-                Size Guide and Fit Details
-                {/* Add size guide component here */}
-              </Typography>
-            </TabPanel>
-          </Grid>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Grid container spacing={4}>
+        {/* Product Image */}
+        <Grid item xs={12} md={6}>
+          <ProductImage src={product.image} alt={product.title} />
         </Grid>
 
-        {/* Recommended Products */}
-        <Box sx={{ mt: 8 }}>
-          <Typography variant="h5" sx={{ mb: 4, fontWeight: 600 }}>
+        {/* Product Details */}
+        <Grid item xs={12} md={6}>
+          <Typography variant="h4" component="h1" gutterBottom>
+            {product.title}
+          </Typography>
+          
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <Rating value={product.rating.rate} precision={0.1} readOnly />
+            <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+              ({product.rating.count} reviews)
+            </Typography>
+          </Box>
+
+          <Typography variant="h5" color="primary" gutterBottom>
+            ${product.price.toFixed(2)}
+          </Typography>
+
+          <Typography variant="body1" paragraph>
+            {product.description}
+          </Typography>
+
+          {/* Size Selection */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle1" gutterBottom>
+              Select Size
+            </Typography>
+            <Box>
+              {sizes.map((size) => (
+                <SizeButton
+                  key={size}
+                  variant={selectedSize === size ? 'contained' : 'outlined'}
+                  onClick={() => setSelectedSize(size)}
+                  className={selectedSize === size ? 'selected' : ''}
+                >
+                  {size}
+                </SizeButton>
+              ))}
+            </Box>
+          </Box>
+
+          {/* Action Buttons */}
+          <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+            <Button
+              variant="contained"
+              size="large"
+              startIcon={<ShoppingCartIcon />}
+              onClick={handleAddToCart}
+              sx={{ flex: 1 }}
+            >
+              Add to Cart
+            </Button>
+            <IconButton
+              onClick={handleWishlistToggle}
+              sx={{
+                border: '1px solid',
+                borderColor: 'divider',
+                '&:hover': {
+                  borderColor: 'primary.main',
+                },
+              }}
+            >
+              {isInWishlistState ? <FavoriteIcon color="error" /> : <FavoriteBorderIcon />}
+            </IconButton>
+          </Box>
+
+          {/* Product Tabs */}
+          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            <Tabs value={tabValue} onChange={handleTabChange}>
+              <Tab label="Description" />
+              <Tab label="Reviews" />
+              <Tab label="Shipping" />
+            </Tabs>
+          </Box>
+
+          <TabPanel value={tabValue} index={0}>
+            <Typography variant="body1">
+              {product.description}
+            </Typography>
+          </TabPanel>
+
+          <TabPanel value={tabValue} index={1}>
+            <Typography variant="body1">
+              Reviews coming soon...
+            </Typography>
+          </TabPanel>
+
+          <TabPanel value={tabValue} index={2}>
+            <Typography variant="body1">
+              Free shipping on orders over $50. Standard delivery takes 3-5 business days.
+            </Typography>
+          </TabPanel>
+        </Grid>
+      </Grid>
+
+      {/* Recommended Products */}
+      {recommendedProducts.length > 0 && (
+        <Box sx={{ mt: 6 }}>
+          <Typography variant="h5" gutterBottom>
             Recommended Products
           </Typography>
-          <Grid container spacing={4}>
+          <Grid container spacing={3}>
             {recommendedProducts.map((recommendedProduct) => (
-              <Grid item key={recommendedProduct.id || recommendedProduct._id} xs={12} sm={6} md={3}>
-                <Box
-                  onClick={() => navigate(`/product/${recommendedProduct.id || recommendedProduct._id}`)}
+              <Grid item key={recommendedProduct.id} xs={12} sm={6} md={3}>
+                <Card
                   sx={{
-                    p: 2,
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    borderRadius: 2,
-                    transition: 'transform 0.2s ease-in-out',
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
                     cursor: 'pointer',
                     '&:hover': {
                       transform: 'translateY(-4px)',
-                      boxShadow: 2,
+                      boxShadow: 4,
                     },
                   }}
+                  onClick={() => navigate(`/product/${recommendedProduct.id}`)}
                 >
-                  <img
-                    src={recommendedProduct.image}
+                  <CardMedia
+                    component="img"
+                    height="200"
+                    image={recommendedProduct.image}
                     alt={recommendedProduct.title}
-                    style={{
-                      width: '100%',
-                      height: '200px',
-                      objectFit: 'contain',
-                      marginBottom: '16px',
-                    }}
+                    sx={{ objectFit: 'contain', p: 2 }}
                   />
-                  <Typography
-                    variant="subtitle1"
-                    sx={{
-                      mb: 1,
-                      fontWeight: 600,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                    }}
-                  >
-                    {recommendedProduct.title}
-                  </Typography>
-                  <Typography variant="h6" sx={{ color: '#2e7d32', fontWeight: 600 }}>
-                    ${recommendedProduct.price.toFixed(2)}
-                  </Typography>
-                </Box>
+                  <CardContent>
+                    <Typography gutterBottom variant="h6" component="h3" noWrap>
+                      {recommendedProduct.title}
+                    </Typography>
+                    <Typography variant="h6" color="primary">
+                      ${recommendedProduct.price.toFixed(2)}
+                    </Typography>
+                  </CardContent>
+                </Card>
               </Grid>
             ))}
           </Grid>
         </Box>
-      </Grid>
+      )}
+
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={3000}
-        onClose={handleSnackbarClose}
+        onClose={() => setSnackbarOpen(false)}
         message={snackbarMessage}
       />
     </Container>

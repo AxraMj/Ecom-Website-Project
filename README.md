@@ -246,7 +246,10 @@ Next steps:
 - Search and filtering features 
 
 npm run seed
-
+npm run add-electronics
+npm run seed:electronics  # To seed only electronics products
+npm run seed:all         # To seed all categories
+npm run seed:shoes
    POST http://localhost:5000/api/admin/login
    {
      "email": "admin@example.com",

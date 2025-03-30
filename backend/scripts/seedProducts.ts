@@ -1,25 +1,10 @@
 import mongoose from 'mongoose';
-import axios from 'axios';
 import Product from '../models/Product';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Function to map external API categories to our categories
-const mapCategory = (apiCategory: string): string => {
-  const categoryMap: { [key: string]: string } = {
-    "men's clothing": 'fashion',
-    "women's clothing": 'fashion',
-    'jewelery': 'fashion',
-    'electronics': 'electronics',
-    'books': 'books',
-    // Add more mappings as needed
-  };
-
-  return categoryMap[apiCategory] || 'fashion'; // Default to 'fashion' if no mapping found
-};
-
-const customProducts = [
+const products = [
   // Electronics Category
   {
     id: 'e1',
@@ -182,6 +167,29 @@ const customProducts = [
     stock: 60,
     isCustom: true,
   },
+  {
+    id: 'f3',
+    title: 'Classic Denim Jeans',
+    price: 89.99,
+    description: 'Premium denim jeans with perfect fit',
+    category: 'fashion',
+    image: 'https://images.unsplash.com/photo-1542272604-787c3835535d',
+    rating: { rate: 4.7, count: 150 },
+    stock: 75,
+    isCustom: true,
+  },
+  {
+    id: 'f4',
+    title: 'Casual Sneakers',
+    price: 79.99,
+    description: 'Comfortable and stylish sneakers for everyday wear',
+    category: 'fashion',
+    image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff',
+    rating: { rate: 4.6, count: 200 },
+    stock: 100,
+    isCustom: true,
+    isFeatured: true,
+  },
 
   // Gaming Category
   {
@@ -195,6 +203,28 @@ const customProducts = [
     stock: 25,
     isCustom: true,
     isFeatured: true,
+  },
+  {
+    id: 'g2',
+    title: 'Gaming Mouse RGB',
+    price: 49.99,
+    description: 'High-precision gaming mouse with RGB lighting',
+    category: 'gaming',
+    image: 'https://images.unsplash.com/photo-1527814050087-3793815479db',
+    rating: { rate: 4.5, count: 180 },
+    stock: 80,
+    isCustom: true,
+  },
+  {
+    id: 'g3',
+    title: 'Gaming Headset Pro',
+    price: 129.99,
+    description: '7.1 surround sound gaming headset with noise cancellation',
+    category: 'gaming',
+    image: 'https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb',
+    rating: { rate: 4.7, count: 160 },
+    stock: 45,
+    isCustom: true,
   },
 
   // Books Category
@@ -211,35 +241,102 @@ const customProducts = [
     isFeatured: true,
   },
   {
-    id: 'w3',
-    title: 'Sports Smartwatch with GPS',
+    id: 'b2',
+    title: 'Business Strategy Guide',
+    price: 34.99,
+    description: 'Comprehensive guide to modern business strategies',
+    category: 'books',
+    image: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f',
+    rating: { rate: 4.6, count: 120 },
+    stock: 60,
+    isCustom: true,
+  },
+  {
+    id: 'b3',
+    title: 'Science Fiction Anthology',
+    price: 39.99,
+    description: 'Collection of classic science fiction stories',
+    category: 'books',
+    image: 'https://images.unsplash.com/photo-1530538987395-032d1800fdd2',
+    rating: { rate: 4.8, count: 180 },
+    stock: 75,
+    isCustom: true,
+  },
+
+  // Beauty Category
+  {
+    id: 'be1',
+    title: 'Premium Skincare Set',
+    price: 89.99,
+    description: 'Complete skincare routine set with natural ingredients',
+    category: 'beauty',
+    image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348',
+    rating: { rate: 4.7, count: 150 },
+    stock: 50,
+    isCustom: true,
+    isFeatured: true,
+  },
+  {
+    id: 'be2',
+    title: 'Luxury Makeup Kit',
+    price: 129.99,
+    description: 'Professional makeup kit with essential products',
+    category: 'beauty',
+    image: 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796',
+    rating: { rate: 4.8, count: 200 },
+    stock: 40,
+    isCustom: true,
+  },
+
+  // Furniture Category
+  {
+    id: 'fu1',
+    title: 'Modern Sofa Set',
+    price: 999.99,
+    description: 'Contemporary 3-piece sofa set with premium upholstery',
+    category: 'furniture',
+    image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc',
+    rating: { rate: 4.7, count: 90 },
+    stock: 15,
+    isCustom: true,
+    isFeatured: true,
+  },
+  {
+    id: 'fu2',
+    title: 'Ergonomic Office Chair',
     price: 199.99,
-    description: 'Sports-focused smartwatch with built-in GPS and fitness tracking',
-    category: 'electronics',
-    image: 'https://images.unsplash.com/photo-1617043786394-f977fa12eddf',
-    rating: { rate: 4.7, count: 212 },
+    description: 'Comfortable office chair with lumbar support',
+    category: 'furniture',
+    image: 'https://images.unsplash.com/photo-1580480055273-228ff5388ef8',
+    rating: { rate: 4.6, count: 120 },
+    stock: 30,
     isCustom: true,
+  },
+
+  // Grocery Category
+  {
+    id: 'gr1',
+    title: 'Organic Food Basket',
+    price: 49.99,
+    description: 'Selection of fresh organic fruits and vegetables',
+    category: 'grocery',
+    image: 'https://images.unsplash.com/photo-1542838132-92c53300491e',
+    rating: { rate: 4.8, count: 250 },
+    stock: 100,
+    isCustom: true,
+    isFeatured: true,
   },
   {
-    id: 'g8',
-    title: 'Mini Drone with HD Camera',
-    price: 299.99,
-    description: 'Compact drone with HD camera and stable flight control',
-    category: 'electronics',
-    image: 'https://images.unsplash.com/photo-1579829366248-204fe8413f31',
-    rating: { rate: 4.8, count: 198 },
+    id: 'gr2',
+    title: 'Healthy Snack Pack',
+    price: 29.99,
+    description: 'Assorted healthy snacks and nuts',
+    category: 'grocery',
+    image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd',
+    rating: { rate: 4.6, count: 180 },
+    stock: 150,
     isCustom: true,
-  },
-  {
-    id: 'g6',
-    title: 'Bluetooth Speaker with RGB Lights',
-    price: 79.99,
-    description: 'Portable Bluetooth speaker with dynamic RGB lighting effects',
-    category: 'electronics',
-    image: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1',
-    rating: { rate: 4.6, count: 167 },
-    isCustom: true,
-  },
+  }
 ];
 
 const seedDatabase = async () => {
@@ -252,34 +349,18 @@ const seedDatabase = async () => {
     await Product.deleteMany({});
     console.log('Cleared existing products');
 
-    // Insert custom products
-    await Product.insertMany(customProducts);
-    console.log('Inserted custom products');
+    // Insert new products
+    const insertedProducts = await Product.insertMany(products);
+    console.log(`Successfully inserted ${insertedProducts.length} products`);
 
-    // Fetch and insert products from external API
-    try {
-      const response = await axios.get('https://fakestoreapi.com/products');
-      const apiProducts = response.data.map((product: any) => ({
-        ...product,
-        category: mapCategory(product.category), // Map the category
-        isCustom: false,
-        isFeatured: Math.random() > 0.8,
-        stock: Math.floor(Math.random() * 100) + 1 // Random stock between 1 and 100
-      }));
-
-      await Product.insertMany(apiProducts);
-      console.log('Inserted API products');
-    } catch (apiError) {
-      console.warn('Error fetching API products:', apiError);
-      // Continue even if API products fail - we still have our custom products
-    }
-
-    console.log('Database seeded successfully');
-    process.exit(0);
+    // Close the connection
+    await mongoose.connection.close();
+    console.log('Database connection closed');
   } catch (error) {
     console.error('Error seeding database:', error);
     process.exit(1);
   }
 };
 
+// Run the seed function
 seedDatabase(); 

@@ -52,15 +52,25 @@ const Gadgets: React.FC = () => {
         setLoading(true);
         setError(null);
         const response = await axios.get('http://localhost:5000/api/products');
-        const gadgetProducts = response.data.filter((product: Product) =>
-          product.category === 'electronics' ||
-          product.category === 'gaming' ||
-          product.title.toLowerCase().includes('gadget') ||
-          product.title.toLowerCase().includes('smart') ||
-          product.title.toLowerCase().includes('device') ||
-          product.title.toLowerCase().includes('watch')
-        );
-        setProducts(gadgetProducts);
+        
+        if (response.data.success) {
+          const products = response.data.products;
+          if (products.length > 0) {
+            const gadgetProducts = products.filter((product: Product) =>
+              product.category === 'electronics' ||
+              product.category === 'gaming' ||
+              product.title.toLowerCase().includes('gadget') ||
+              product.title.toLowerCase().includes('smart') ||
+              product.title.toLowerCase().includes('device') ||
+              product.title.toLowerCase().includes('watch')
+            );
+            setProducts(gadgetProducts);
+          } else {
+            setError('No gadget products found. Please try again later.');
+          }
+        } else {
+          setError('Failed to load gadget products. Please try again later.');
+        }
       } catch (err) {
         setError('Failed to load gadget products. Please try again later.');
         console.error('Error fetching products:', err);

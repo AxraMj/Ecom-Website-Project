@@ -263,24 +263,14 @@ const Header: React.FC = () => {
     }
 
     try {
-      const response = await axios.get('https://fakestoreapi.com/products');
-      const products = response.data;
+      const response = await axios.get(`http://localhost:5000/api/products?search=${encodeURIComponent(query)}`);
+      const products = response.data.products;
       const filtered = products
         .filter((product: SearchSuggestion) =>
           product.title.toLowerCase().includes(query.toLowerCase()) ||
           product.category.toLowerCase().includes(query.toLowerCase())
         )
         .slice(0, 6);
-
-      if (filtered.length === 0 && query.length > 2) {
-        filtered.push({
-          id: 'f1',
-          title: `${query} - Premium Headphones`,
-          category: 'electronics',
-          image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e',
-          price: 199.99,
-        });
-      }
 
       setSuggestions(filtered);
     } catch (error) {
