@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -20,6 +20,18 @@ import {
   TextField,
   InputAdornment,
   ListItemIcon,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemAvatar,
+  Avatar,
+  ButtonGroup,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -31,13 +43,14 @@ import {
   Weekend as FurnitureIcon,
   LocalGroceryStore as GroceryIcon,
   SportsEsports as GamingIcon,
-  Favorite as BeautyIcon,
+  Favorite as FavoriteIcon,
   LibraryBooks as BooksIcon,
   CardGiftcard as DealsIcon,
   Delete as DeleteIcon,
   Remove,
   Add,
   LocalShipping as LocalShippingIcon,
+  ShoppingBag as CheckoutIcon,
 } from '@mui/icons-material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -309,7 +322,7 @@ const Header: React.FC = () => {
     { name: 'Home & Furniture', icon: <FurnitureIcon />, path: '/category/furniture' },
     { name: 'Grocery', icon: <GroceryIcon />, path: '/category/grocery' },
     { name: 'Gaming', icon: <GamingIcon />, path: '/category/gaming' },
-    { name: 'Beauty', icon: <BeautyIcon />, path: '/category/beauty' },
+    { name: 'Beauty', icon: <FavoriteIcon />, path: '/category/beauty' },
     { name: 'Books', icon: <BooksIcon />, path: '/category/books' },
     { name: "Today's Deals", icon: <DealsIcon />, path: '/deals' },
   ];
@@ -475,14 +488,17 @@ const Header: React.FC = () => {
             </LogoText>
           </StyledLink>
 
-          {/* Deliver To */}
-          <NavButton startIcon={<LocationIcon />}>
+          {/* Wishlist */}
+          <NavButton 
+            startIcon={<FavoriteIcon />}
+            onClick={() => navigate('/wishlist')}
+          >
             <Box>
               <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                Deliver to
+                Your
               </Typography>
               <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                Select Location
+                Wishlist
               </Typography>
             </Box>
           </NavButton>
