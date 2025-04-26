@@ -20,6 +20,12 @@ import OrdersPage from './pages/OrdersPage';
 import { WishlistProvider } from './contexts/WishlistContext';
 import WishlistPage from './pages/WishlistPage';
 import AdminDashboard from './components/admin/AdminDashboard';
+import SellerDashboardPage from './pages/SellerDashboardPage';
+import SellerOverview from './components/seller/SellerOverview';
+import MySubmissions from './components/seller/MySubmissions';
+import SubmitProductForm from './components/seller/SubmitProductForm';
+import ProductManagement from './pages/seller/ProductManagement';
+import SellerLoginPage from './pages/SellerLoginPage';
 
 const App: React.FC = () => {
   return (
@@ -43,7 +49,7 @@ const App: React.FC = () => {
                   <Route 
                     path="/admin/*" 
                     element={
-                      <ProtectedRoute>
+                      <ProtectedRoute requireAdmin={true}>
                         <AdminDashboard />
                       </ProtectedRoute>
                     } 
@@ -56,6 +62,53 @@ const App: React.FC = () => {
                         ? <Navigate to="/admin/dashboard" replace /> 
                         : <Navigate to="/admin/login" replace />
                     } 
+                  />
+                  
+                  {/* Seller routes */}
+                  <Route path="/seller/login" element={<SellerLoginPage />} />
+                  
+                  {/* Root seller path redirect */}
+                  <Route 
+                    path="/seller"
+                    element={
+                      localStorage.getItem('userToken') 
+                        ? <Navigate to="/seller/dashboard" replace /> 
+                        : <Navigate to="/seller/login" replace />
+                    }
+                  />
+                  
+                  {/* Seller dashboard and nested routes */}
+                  <Route 
+                    path="/seller/dashboard"
+                    element={
+                      <ProtectedRoute>
+                        <SellerDashboardPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route 
+                    path="/seller/products/new"
+                    element={
+                      <ProtectedRoute>
+                        <SellerDashboardPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route 
+                    path="/seller/products"
+                    element={
+                      <ProtectedRoute>
+                        <SellerDashboardPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route 
+                    path="/seller/submissions"
+                    element={
+                      <ProtectedRoute>
+                        <SellerDashboardPage />
+                      </ProtectedRoute>
+                    }
                   />
                   
                   {/* Protected user routes */}

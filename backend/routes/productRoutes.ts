@@ -45,6 +45,8 @@ router.get('/', async (req, res) => {
     const { category, search, sort, page = 1, limit = 12 } = req.query;
     const query: any = {};
 
+    console.log('GET /api/products route called with query:', req.query);
+
     // Apply category filter
     if (category) {
       query.category = category;
@@ -58,8 +60,29 @@ router.get('/', async (req, res) => {
       ];
     }
 
-    // Get products from database
-    const dbProducts = await Product.find(query);
+    // Get products from database - use a more complete query
+    console.log('Fetching DB products with query:', query);
+    const dbProducts = await Product.find(query).lean();
+    
+    // Make sure we have proper IDs for database products
+    const formattedDbProducts = dbProducts.map(product => ({
+      ...product,
+      id: product._id.toString(),
+      _id: product._id.toString()
+    }));
+    
+    console.log('Database products found:', formattedDbProducts.length);
+    
+    if (formattedDbProducts.length > 0) {
+      console.log('Sample DB product:', {
+        id: formattedDbProducts[0].id,
+        _id: formattedDbProducts[0]._id,
+        title: formattedDbProducts[0].title,
+        source: formattedDbProducts[0].source,
+        seller: formattedDbProducts[0].seller,
+        storeName: formattedDbProducts[0].storeName
+      });
+    }
 
     // Get products from FakeStore API
     const frontendResponse = await axios.get('https://fakestoreapi.com/products');
@@ -77,34 +100,50 @@ router.get('/', async (req, res) => {
           product.category.toLowerCase() === (category as string).toLowerCase()
         )
       : frontendProducts;
+    
+    console.log('Frontend API products after filtering:', filteredFrontendProducts.length);
 
-    // Combine products
-    const allProducts = [...filteredFrontendProducts, ...dbProducts];
+    // Combine products - database products come first for priority
+    const allProducts = [...formattedDbProducts, ...filteredFrontendProducts];
+    console.log('Total combined products:', allProducts.length);
 
     // Apply sorting
-    let sortOption = {};
+    let sortedProducts = [...allProducts];
     if (sort) {
       switch (sort) {
         case 'price-asc':
-          sortOption = { price: 1 };
+          sortedProducts.sort((a, b) => a.price - b.price);
           break;
         case 'price-desc':
-          sortOption = { price: -1 };
+          sortedProducts.sort((a, b) => b.price - a.price);
           break;
         case 'rating-desc':
-          sortOption = { 'rating.rate': -1 };
+          sortedProducts.sort((a, b) => b.rating.rate - a.rating.rate);
           break;
         case 'newest':
-          sortOption = { createdAt: -1 };
+          // For products with createdAt, use that, otherwise default order
+          sortedProducts.sort((a, b) => {
+            if (a.createdAt && b.createdAt) {
+              return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+            }
+            if (a.createdAt) return -1;
+            if (b.createdAt) return 1;
+            return 0;
+          });
           break;
         default:
-          sortOption = { createdAt: -1 };
+          // Default sorting that prioritizes database products first
+          break;
       }
     }
 
     // Calculate pagination
     const skip = (Number(page) - 1) * Number(limit);
-    const paginatedProducts = allProducts.slice(skip, skip + Number(limit));
+    const paginatedProducts = sortedProducts.slice(skip, skip + Number(limit));
+    
+    console.log('Final paginated products count:', paginatedProducts.length);
+    console.log('Database products in final result:', 
+      paginatedProducts.filter(p => p.source === 'database').length);
 
     res.status(200).json({
       success: true,
@@ -242,8 +281,8 @@ router.get('/product/:id', async (req, res) => {
             success: true,
             product: {
               ...product.toObject(),
-              _id: product._id.toString(),
-              id: product.id || product._id.toString()
+              _id: (product._id as any).toString(),
+              id: product.id || (product._id as any).toString()
             }
           });
         }

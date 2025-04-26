@@ -1,34 +1,17 @@
 import { Request, Response } from 'express';
-import Product from '../models/Product';
-import { IUserDocument } from '../models/User';
+import Product, { IProductDocument, IProductSchema } from '../models/Product';
+import User, { IUserDocument } from '../models/User';
+import Cart from '../models/Cart';
+import mongoose, { Document } from 'mongoose';
+import { AuthRequest } from '../types/custom';
 import { IAdminDocument } from '../models/Admin';
-import { Document } from 'mongoose';
 import axios from 'axios';
-
-interface AuthRequest extends Request {
-  user?: IUserDocument | IAdminDocument;
-  isAdmin?: boolean;
-}
 
 interface Review {
   user: string;
   name: string;
   rating: number;
   comment: string;
-}
-
-interface IProduct extends Document {
-  name: string;
-  description: string;
-  price: number;
-  category: string;
-  seller: string;
-  stock: number;
-  images: Array<{ url: string }>;
-  reviews: Review[];
-  numOfReviews: number;
-  ratings: number;
-  user: string;
 }
 
 interface CreateProductRequest extends AuthRequest {
@@ -168,8 +151,8 @@ export const getSingleProduct = async (req: Request, res: Response) => {
             success: true,
             product: {
               ...product.toObject(),
-              _id: product._id.toString(),
-              id: product.id || product._id.toString()
+              _id: (product._id as any).toString(),
+              id: product.id || (product._id as any).toString()
             }
           });
         }
@@ -280,7 +263,7 @@ export const createProductReview = async (req: CreateReviewRequest, res: Respons
       comment
     };
 
-    const product = await Product.findById(productId) as IProduct;
+    const product = await Product.findById(productId) as IProductDocument;
 
     if (!product) {
       return res.status(404).json({
@@ -289,15 +272,20 @@ export const createProductReview = async (req: CreateReviewRequest, res: Respons
       });
     }
 
+    // Initialize reviews array if it doesn't exist
+    if (!product.reviews) {
+      product.reviews = [];
+    }
+
     const isReviewed = product.reviews.find(
-      (r: Review) => r.user.toString() === user._id.toString()
+      r => r.user.toString() === user._id.toString()
     );
 
     if (isReviewed) {
-      product.reviews.forEach((review: Review) => {
-        if (review.user.toString() === user._id.toString()) {
-          review.comment = comment;
-          review.rating = rating;
+      product.reviews.forEach(reviewItem => {
+        if (reviewItem.user.toString() === user._id.toString()) {
+          reviewItem.comment = comment;
+          reviewItem.rating = rating;
         }
       });
     } else {
@@ -305,7 +293,8 @@ export const createProductReview = async (req: CreateReviewRequest, res: Respons
       product.numOfReviews = product.reviews.length;
     }
 
-    product.ratings = product.reviews.reduce((acc: number, item: Review) => item.rating + acc, 0) / product.reviews.length;
+    // Calculate the average rating
+    product.ratings = product.reviews.reduce((acc, item) => item.rating + acc, 0) / product.reviews.length;
 
     await product.save({ validateBeforeSave: false });
 
@@ -313,6 +302,7 @@ export const createProductReview = async (req: CreateReviewRequest, res: Respons
       success: true
     });
   } catch (error) {
+    console.error('Error creating review:', error);
     res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : 'An error occurred'

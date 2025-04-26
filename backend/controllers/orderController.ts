@@ -1,19 +1,23 @@
 import { Request, Response } from 'express';
 import Order from '../models/Order';
 import Cart from '../models/Cart';
-
-interface AuthRequest extends Request {
-  user?: any;
-}
+import { AuthRequest } from '../types/custom';
 
 // Create new order
 export const createOrder = async (req: AuthRequest, res: Response) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Not authorized'
+      });
+    }
+
     const { items, shipping, payment, totalAmount } = req.body;
 
     // Create the order
     const order = await Order.create({
-      userId: req.user._id,
+      userId: req.user!._id,
       items,
       shipping,
       payment,
@@ -22,7 +26,7 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
 
     // Clear the user's cart after successful order
     await Cart.findOneAndUpdate(
-      { userId: req.user._id },
+      { userId: req.user!._id },
       { items: [], totalPrice: 0 }
     );
 
@@ -42,7 +46,14 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
 // Get user's orders
 export const getUserOrders = async (req: AuthRequest, res: Response) => {
   try {
-    const orders = await Order.find({ userId: req.user._id })
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Not authorized'
+      });
+    }
+
+    const orders = await Order.find({ userId: req.user!._id })
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -60,6 +71,13 @@ export const getUserOrders = async (req: AuthRequest, res: Response) => {
 // Get single order
 export const getOrderById = async (req: AuthRequest, res: Response) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Not authorized'
+      });
+    }
+
     const order = await Order.findById(req.params.id);
 
     if (!order) {
@@ -70,7 +88,7 @@ export const getOrderById = async (req: AuthRequest, res: Response) => {
     }
 
     // Check if the order belongs to the user
-    if (order.userId.toString() !== req.user._id.toString()) {
+    if (order.userId.toString() !== req.user!._id.toString()) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to access this order'
@@ -92,6 +110,13 @@ export const getOrderById = async (req: AuthRequest, res: Response) => {
 // Submit return request
 export const submitReturn = async (req: AuthRequest, res: Response) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Not authorized'
+      });
+    }
+
     const { reason } = req.body;
     const order = await Order.findById(req.params.id);
 
@@ -103,7 +128,7 @@ export const submitReturn = async (req: AuthRequest, res: Response) => {
     }
 
     // Check if the order belongs to the user
-    if (order.userId.toString() !== req.user._id.toString()) {
+    if (order.userId.toString() !== req.user!._id.toString()) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to return this order'
@@ -138,6 +163,13 @@ export const submitReturn = async (req: AuthRequest, res: Response) => {
 // Cancel order
 export const cancelOrder = async (req: AuthRequest, res: Response) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Not authorized'
+      });
+    }
+
     const order = await Order.findById(req.params.id);
 
     if (!order) {
@@ -148,7 +180,7 @@ export const cancelOrder = async (req: AuthRequest, res: Response) => {
     }
 
     // Check if the order belongs to the user
-    if (order.userId.toString() !== req.user._id.toString()) {
+    if (order.userId.toString() !== req.user!._id.toString()) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to cancel this order'

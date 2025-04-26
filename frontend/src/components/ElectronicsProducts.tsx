@@ -15,9 +15,9 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
 import { useCart } from '../contexts/CartContext';
+import { productService } from '../api';
 
 interface Product {
   id: string;
@@ -30,6 +30,9 @@ interface Product {
   };
   image: string;
   category: string;
+  source?: 'database' | 'frontend';
+  seller?: string;
+  storeName?: string;
 }
 
 const ProductCard = styled(Card)(({ theme }) => ({
@@ -65,10 +68,10 @@ const ElectronicsProducts: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await axios.get('http://localhost:5000/api/products?category=electronics');
+        const response = await productService.getProducts({ category: 'electronics' });
         
-        if (response.data.success) {
-          const products = response.data.products;
+        if (response.success) {
+          const products = response.products;
           if (products.length > 0) {
             setProducts(products);
           } else {
@@ -173,6 +176,13 @@ const ElectronicsProducts: React.FC = () => {
                   <Typography gutterBottom variant="h6" component="h3">
                     {product.title}
                   </Typography>
+                  
+                  {product.storeName && (
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                      Seller: {product.storeName}
+                    </Typography>
+                  )}
+                  
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                     <Rating value={product.rating.rate} precision={0.1} readOnly size="small" />
                     <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>

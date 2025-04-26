@@ -22,15 +22,17 @@ import {
   Dashboard as DashboardIcon,
   Category as CategoryIcon,
   Assessment as AssessmentIcon,
+  Inventory as InventoryIcon,
 } from '@mui/icons-material';
 import UserList from './UserList';
 import ProductList from './ProductList';
+import ProductSubmissions from '../../pages/admin/ProductSubmissions';
 
 const drawerWidth = 240;
 
 const AdminDashboard: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [currentSection, setCurrentSection] = useState<'dashboard' | 'users' | 'products' | 'categories' | 'orders' | 'reports'>('dashboard');
+  const [currentSection, setCurrentSection] = useState<'dashboard' | 'users' | 'products' | 'categories' | 'orders' | 'reports' | 'submissions'>('dashboard');
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -40,6 +42,7 @@ const AdminDashboard: React.FC = () => {
     { text: 'Dashboard', icon: <DashboardIcon />, section: 'dashboard' },
     { text: 'Users', icon: <PeopleIcon />, section: 'users' },
     { text: 'Products', icon: <ShoppingCartIcon />, section: 'products' },
+    { text: 'Submissions', icon: <InventoryIcon />, section: 'submissions' },
     { text: 'Categories', icon: <CategoryIcon />, section: 'categories' },
     { text: 'Reports', icon: <AssessmentIcon />, section: 'reports' },
   ];
@@ -74,6 +77,8 @@ const AdminDashboard: React.FC = () => {
         return <UserList />;
       case 'products':
         return <ProductList onEditProduct={() => {}} />;
+      case 'submissions':
+        return <ProductSubmissions />;
       default:
         return (
           <Typography variant="h6" component="h2">

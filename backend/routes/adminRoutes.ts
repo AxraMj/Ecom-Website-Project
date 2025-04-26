@@ -7,8 +7,15 @@ import {
   getUser,
   updateUser,
   deleteUser,
-  toggleUserStatus
+  toggleUserStatus,
+  verifySeller
 } from '../controllers/userController';
+import {
+  getProductSubmissions,
+  getProductSubmission,
+  approveSubmission,
+  rejectSubmission
+} from '../controllers/adminController';
 
 const router = express.Router();
 
@@ -65,5 +72,12 @@ router.get('/users/:id', protect, checkAdmin, getUser);
 router.put('/users/:id', protect, checkAdmin, updateUser);
 router.delete('/users/:id', protect, checkAdmin, deleteUser);
 router.patch('/users/:id/toggle-status', protect, checkAdmin, toggleUserStatus);
+router.patch('/users/:id/verify-seller', protect, checkAdmin, verifySeller);
+
+// Product submission approval routes
+router.get('/product-submissions', protect, checkAdmin, getProductSubmissions);
+router.get('/product-submissions/:id', protect, checkAdmin, getProductSubmission);
+router.post('/product-submissions/:id/approve', protect, checkAdmin, approveSubmission);
+router.post('/product-submissions/:id/reject', protect, checkAdmin, rejectSubmission);
 
 export default router; 

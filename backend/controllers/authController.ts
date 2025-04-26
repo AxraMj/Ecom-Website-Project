@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import User, { IUserDocument } from '../models/User';
 import jwt from 'jsonwebtoken';
+import { generateToken } from '../middleware/authMiddleware';
+import { AuthRequest } from '../types/custom';
 
 interface RegisterUserRequest extends Request {
   body: {
@@ -15,10 +17,6 @@ interface LoginUserRequest extends Request {
     email: string;
     password: string;
   };
-}
-
-interface AuthRequest extends Request {
-  user?: IUserDocument;
 }
 
 // Register a new user
@@ -155,14 +153,14 @@ export const loginUser = async (req: LoginUserRequest, res: Response) => {
 // Get currently logged in user details
 export const getUserProfile = async (req: AuthRequest, res: Response) => {
   try {
-    if (!req.user?._id) {
+    if (!req.user) {
       return res.status(401).json({
         success: false,
         message: 'Not authorized'
       });
     }
 
-    const user = await User.findById(req.user._id);
+    const user = await User.findById(req.user!._id);
 
     res.status(200).json({
       success: true,

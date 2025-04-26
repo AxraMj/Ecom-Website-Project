@@ -1,13 +1,9 @@
 import { Request, Response } from 'express';
 import User from '../models/User';
-
-interface AuthenticatedRequest extends Request {
-  user?: any;
-  isAdmin?: boolean;
-}
+import { AuthRequest } from '../types/custom';
 
 // Get all users (admin only)
-export const getAllUsers = async (req: AuthenticatedRequest, res: Response) => {
+export const getAllUsers = async (req: AuthRequest, res: Response) => {
   try {
     if (!req.isAdmin) {
       console.log('Access denied: User is not admin');
@@ -40,7 +36,7 @@ export const getAllUsers = async (req: AuthenticatedRequest, res: Response) => {
 };
 
 // Get single user (admin only)
-export const getUser = async (req: AuthenticatedRequest, res: Response) => {
+export const getUser = async (req: AuthRequest, res: Response) => {
   try {
     if (!req.isAdmin) {
       return res.status(403).json({
@@ -70,7 +66,7 @@ export const getUser = async (req: AuthenticatedRequest, res: Response) => {
 };
 
 // Update user (admin only)
-export const updateUser = async (req: AuthenticatedRequest, res: Response) => {
+export const updateUser = async (req: AuthRequest, res: Response) => {
   try {
     if (!req.isAdmin) {
       return res.status(403).json({
@@ -107,7 +103,7 @@ export const updateUser = async (req: AuthenticatedRequest, res: Response) => {
 };
 
 // Delete user (admin only)
-export const deleteUser = async (req: AuthenticatedRequest, res: Response) => {
+export const deleteUser = async (req: AuthRequest, res: Response) => {
   try {
     if (!req.isAdmin) {
       return res.status(403).json({
@@ -152,7 +148,7 @@ export const deleteUser = async (req: AuthenticatedRequest, res: Response) => {
 };
 
 // Toggle user status (active/inactive)
-export const toggleUserStatus = async (req: AuthenticatedRequest, res: Response) => {
+export const toggleUserStatus = async (req: AuthRequest, res: Response) => {
   try {
     if (!req.isAdmin) {
       return res.status(403).json({
@@ -193,6 +189,135 @@ export const toggleUserStatus = async (req: AuthenticatedRequest, res: Response)
     res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : 'Error toggling user status'
+    });
+  }
+};
+
+// Request to become a seller
+export const requestSellerStatus = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Not authorized'
+      });
+    }
+
+    const { storeName, storeDescription } = req.body;
+
+    if (!storeName) {
+      return res.status(400).json({
+        success: false,
+        message: 'Store name is required'
+      });
+    }
+
+    // Update user to become a seller
+    const user = await User.findById(req.user._id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    console.log('Updating user to seller role:', {
+      userId: user._id,
+      currentRole: user.role,
+      storeName: storeName
+    });
+
+    // If already a seller
+    if (user.role === 'seller') {
+      return res.status(400).json({
+        success: false,
+        message: 'User is already a seller'
+      });
+    }
+
+    // Update user to seller role
+    user.role = 'seller';
+    user.storeName = storeName;
+    user.storeDescription = storeDescription || '';
+    user.isVerified = false; // New sellers start unverified
+    
+    await user.save();
+
+    console.log('User successfully updated to seller:', {
+      userId: user._id,
+      newRole: user.role,
+      storeName: user.storeName
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Your account has been upgraded to seller status',
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        storeName: user.storeName,
+        storeDescription: user.storeDescription,
+        isVerified: user.isVerified
+      }
+    });
+  } catch (error) {
+    console.error('Error requesting seller status:', error);
+    res.status(500).json({
+      success: false,
+      message: error instanceof Error ? error.message : 'Error requesting seller status'
+    });
+  }
+};
+
+// Verify a seller (admin only)
+export const verifySeller = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admin only.'
+      });
+    }
+
+    const user = await User.findById(req.params.id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    if (user.role !== 'seller') {
+      return res.status(400).json({
+        success: false,
+        message: 'User is not a seller'
+      });
+    }
+
+    user.isVerified = true;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Seller has been verified',
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        storeName: user.storeName,
+        isVerified: user.isVerified
+      }
+    });
+  } catch (error) {
+    console.error('Error verifying seller:', error);
+    res.status(500).json({
+      success: false,
+      message: error instanceof Error ? error.message : 'Error verifying seller'
     });
   }
 }; 

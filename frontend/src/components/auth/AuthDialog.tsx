@@ -23,9 +23,10 @@ import { useAuth } from '../../contexts/AuthContext';
 interface AuthDialogProps {
   open: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
+const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose, onSuccess }) => {
   const [tab, setTab] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -152,7 +153,11 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
       } else { // Register
         await register(formData.name, formData.email, formData.password);
       }
-      onClose();
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        onClose();
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       console.error('Auth error:', err);

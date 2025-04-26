@@ -11,10 +11,12 @@ import Admin from './models/Admin';
 // Import routes
 import adminRoutes from './routes/adminRoutes';
 import userRoutes from './routes/userRoutes';
+import authRoutes from './routes/authRoutes';
 import cartRoutes from './routes/cartRoutes';
 import orderRoutes from './routes/orderRoutes';
 import wishlistRoutes from './routes/wishlistRoutes';
 import productRoutes from './routes/productRoutes';
+import sellerRoutes from './routes/sellerRoutes';
 
 // Import middleware
 import { protect } from './middleware/authMiddleware';
@@ -33,11 +35,13 @@ app.use(morgan('dev'));
 
 // Mount routes
 app.use('/api/admin', adminRoutes);
-app.use('/api/auth', userRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/sellers', sellerRoutes);
 
 // Create initial admin account if it doesn't exist
 const createInitialAdmin = async () => {

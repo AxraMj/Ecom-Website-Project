@@ -52,7 +52,7 @@ import {
   LocalShipping as LocalShippingIcon,
   ShoppingBag as CheckoutIcon,
 } from '@mui/icons-material';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import AuthDialog from './auth/AuthDialog';
@@ -249,6 +249,7 @@ const Header: React.FC = () => {
   const { items, totalPrice, removeFromCart, updateQuantity } = useCart();
   const [cartAnchorEl, setCartAnchorEl] = useState<null | HTMLElement>(null);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const location = useLocation();
 
   const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -391,16 +392,31 @@ const Header: React.FC = () => {
             navigate('/wishlist');
             handleMenuClose();
           }}>Wishlist</MenuItem>
+          {user?.role === 'seller' && (
+            <MenuItem onClick={() => {
+              navigate('/seller/dashboard');
+              handleMenuClose();
+            }}>
+              Seller Dashboard
+            </MenuItem>
+          )}
+          <Divider />
           <MenuItem onClick={() => {
             logout();
             handleMenuClose();
           }}>Logout</MenuItem>
         </>
       ) : (
-        <MenuItem onClick={() => {
-          setAuthDialogOpen(true);
-          handleMenuClose();
-        }}>Login/Register</MenuItem>
+        <>
+          <MenuItem onClick={() => {
+            setAuthDialogOpen(true);
+            handleMenuClose();
+          }}>Login/Register</MenuItem>
+          <MenuItem onClick={() => {
+            navigate('/seller/login');
+            handleMenuClose();
+          }}>Seller Login</MenuItem>
+        </>
       )}
     </Menu>
   );
@@ -476,6 +492,25 @@ const Header: React.FC = () => {
       )}
     </CartMenu>
   );
+
+  // Check if we need to open auth dialog based on redirect
+  useEffect(() => {
+    if (location.state && location.state.openAuthDialog) {
+      setAuthDialogOpen(true);
+      // Clear the state so it doesn't reopen on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
+  
+  // Handle successful login with redirect if needed
+  const handleAuthSuccess = () => {
+    setAuthDialogOpen(false);
+    const redirectPath = sessionStorage.getItem('redirectPath');
+    if (redirectPath) {
+      sessionStorage.removeItem('redirectPath');
+      navigate(redirectPath);
+    }
+  };
 
   return (
     <>
@@ -649,7 +684,8 @@ const Header: React.FC = () => {
       {renderMenu}
       <AuthDialog 
         open={authDialogOpen} 
-        onClose={() => setAuthDialogOpen(false)} 
+        onClose={() => setAuthDialogOpen(false)}
+        onSuccess={handleAuthSuccess}
       />
 
       {renderCartMenu}

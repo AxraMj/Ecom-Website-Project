@@ -6,8 +6,11 @@ export interface IUser {
   name: string;
   email: string;
   password: string;
-  role: 'user' | 'admin';
+  role: 'user' | 'admin' | 'seller';
   isActive: boolean;
+  storeName?: string;
+  storeDescription?: string;
+  isVerified?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -45,12 +48,25 @@ const userSchema = new Schema<IUserDocument>({
   },
   role: {
     type: String,
-    enum: ['user', 'admin'],
+    enum: ['user', 'admin', 'seller'],
     default: 'user'
   },
   isActive: {
     type: Boolean,
     default: true
+  },
+  // Seller-specific fields
+  storeName: {
+    type: String,
+    maxLength: [100, 'Store name cannot exceed 100 characters']
+  },
+  storeDescription: {
+    type: String,
+    maxLength: [500, 'Store description cannot exceed 500 characters']
+  },
+  isVerified: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true,

@@ -28,11 +28,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const token = localStorage.getItem('userToken');
       if (token) {
         try {
+          console.log('Checking authentication with token');
           const response = await axios.get('http://localhost:5000/api/auth/profile', {
             headers: { Authorization: `Bearer ${token}` }
           });
-          setUser(response.data.user);
+          
+          console.log('Auth check response:', response.data);
+          
+          // Handle both response formats (with or without user wrapper)
+          const userData = response.data.user || response.data;
+          
+          if (!userData || !userData._id) {
+            console.error('Invalid user data in response:', response.data);
+            localStorage.removeItem('userToken');
+            setUser(null);
+            setLoading(false);
+            return;
+          }
+          
+          console.log('Setting user state with role:', userData.role);
+          setUser({
+            _id: userData._id,
+            name: userData.name,
+            email: userData.email,
+            role: userData.role
+          });
         } catch (error) {
+          console.error('Auth check failed:', error);
           localStorage.removeItem('userToken');
           setUser(null);
         }
@@ -45,18 +67,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string) => {
     try {
+      console.log('Logging in with email:', email);
       const response = await axios.post('http://localhost:5000/api/auth/login', {
         email,
         password
       });
       
+      console.log('Login response:', response.data);
+      
       if (response.data.token) {
         localStorage.setItem('userToken', response.data.token);
+        
+        // Check if user data is in response.data.user or directly in response.data
+        const userData = response.data.user || response.data;
+        
         setUser({
-          _id: response.data._id,
-          name: response.data.name,
-          email: response.data.email,
-          role: response.data.role
+          _id: userData._id,
+          name: userData.name,
+          email: userData.email,
+          role: userData.role
+        });
+        
+        console.log('User set in context:', {
+          _id: userData._id,
+          name: userData.name,
+          email: userData.email,
+          role: userData.role
         });
       } else {
         throw new Error('No token received');

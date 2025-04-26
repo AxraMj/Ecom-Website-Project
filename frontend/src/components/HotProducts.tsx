@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Box, Container, Typography, Card, CardMedia, CardContent, CardActions, Button, Rating, CircularProgress, Alert, IconButton, Snackbar } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import axios from 'axios';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
+import { productService } from '../api';
 
 interface Product {
+  _id?: string;
   id: string;
   title: string;
   price: number;
@@ -16,6 +17,9 @@ interface Product {
     count: number;
   };
   image: string;
+  source?: 'database' | 'frontend';
+  seller?: string;
+  storeName?: string;
 }
 
 const ProductCard = styled(Card)(({ theme }) => ({
@@ -125,7 +129,7 @@ const HotProducts: React.FC = () => {
     }
 
     addToCart({
-      id: product.id,
+      id: product._id || product.id,
       title: product.title,
       price: product.price,
       image: product.image,
@@ -144,14 +148,58 @@ const HotProducts: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await axios.get('http://localhost:5000/api/products');
         
-        if (response.data.success) {
-          const products = response.data.products;
+        console.log('HotProducts: Fetching products...');
+        const response = await productService.getProducts();
+        
+        if (response.success) {
+          const products = response.products;
+          console.log('HotProducts: Products received, count:', products.length);
+          
           if (products.length > 0) {
-            const sortedProducts = products
-              .sort((a: Product, b: Product) => b.rating.rate - a.rating.rate)
-              .slice(0, 8);
+            // Log product sources
+            const sources = products.map((p: Product) => p.source);
+            const uniqueSources = Array.from(new Set(sources));
+            console.log('Product sources:', uniqueSources);
+            
+            // Find any DB products
+            const dbProducts = products.filter((p: Product) => p.source === 'database');
+            console.log('Database products found:', dbProducts.length);
+            
+            if (dbProducts.length > 0) {
+              console.log('Sample DB product:', dbProducts[0]);
+            }
+            
+            // Sort products - ensure we display database products
+            let sortedProducts: Product[] = [];
+            
+            // First add database products (up to 4 or all if less than 4)
+            if (dbProducts.length > 0) {
+              // Sort database products by rating
+              const sortedDbProducts = [...dbProducts].sort((a, b) => b.rating.rate - a.rating.rate);
+              sortedProducts = sortedDbProducts.slice(0, Math.min(4, dbProducts.length));
+              console.log('Database products selected for display:', sortedProducts.length);
+            }
+            
+            // Then fill remaining slots with highest rated products (that aren't already included)
+            const remainingSlots = 8 - sortedProducts.length;
+            if (remainingSlots > 0) {
+              // Get IDs of already selected products to avoid duplicates
+              const selectedIds = new Set(sortedProducts.map(p => p._id || p.id));
+              
+              // Filter and sort remaining products
+              const otherProducts = products
+                .filter((p: Product) => !selectedIds.has(p._id || p.id))
+                .sort((a: Product, b: Product) => b.rating.rate - a.rating.rate)
+                .slice(0, remainingSlots);
+              
+              sortedProducts = [...sortedProducts, ...otherProducts];
+            }
+            
+            console.log('Final products to display:', sortedProducts.length);
+            console.log('Database products in final display:', 
+              sortedProducts.filter(p => p.source === 'database').length);
+            
             setProducts(sortedProducts);
           } else {
             setError('No products found. Please try again later.');
@@ -235,8 +283,8 @@ const HotProducts: React.FC = () => {
           >
             {products.map((product) => (
               <ProductCard 
-                key={product.id}
-                onClick={() => handleProductClick(product.id)}
+                key={product._id || product.id}
+                onClick={() => handleProductClick(product._id || product.id)}
                 sx={{
                   cursor: 'pointer',
                 }}
@@ -248,63 +296,66 @@ const HotProducts: React.FC = () => {
                 <CardContent sx={{ flexGrow: 1 }}>
                   <Typography 
                     gutterBottom 
-                    variant="h6" 
-                    component="h3" 
-                    sx={{
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
+                    variant="subtitle1" 
+                    component="h2" 
+                    sx={{ 
+                      fontWeight: 600,
                       display: '-webkit-box',
-                      WebkitLineClamp: 2,
+                      overflow: 'hidden',
                       WebkitBoxOrient: 'vertical',
-                      lineHeight: 1.2,
-                      height: '2.4em',
-                      color: '#2C3E50',
+                      WebkitLineClamp: 2,
+                      lineHeight: '1.3em',
+                      height: '2.6em',
                     }}
                   >
                     {product.title}
                   </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <Rating 
-                      value={product.rating.rate} 
-                      precision={0.1} 
-                      readOnly 
+                  
+                  {product.storeName && (
+                    <Typography 
+                      variant="body2" 
+                      color="text.secondary"
+                      sx={{ mb: 1 }}
+                    >
+                      Seller: {product.storeName}
+                    </Typography>
+                  )}
+                  
+                  <Box display="flex" alignItems="center" marginBottom={1}>
+                    <Rating
+                      value={product.rating.rate}
+                      precision={0.5}
                       size="small"
-                      sx={{ color: theme => theme.palette.secondary.main }}
+                      readOnly
                     />
-                    <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ ml: 0.5 }}
+                    >
                       ({product.rating.count})
                     </Typography>
                   </Box>
-                  <ProductPrice>
+                  
+                  <ProductPrice variant="h6">
                     ${product.price.toFixed(2)}
                   </ProductPrice>
                 </CardContent>
                 <CardActions>
-                  <Button 
-                    variant="contained" 
-                    fullWidth 
-                    sx={{ 
-                      bgcolor: 'secondary.main',
-                      borderRadius: '4px',
-                      textTransform: 'none',
-                      fontWeight: 600,
-                      padding: '10px',
-                      fontSize: '0.95rem',
-                      '&:hover': {
-                        bgcolor: 'secondary.dark',
-                        transform: 'translateY(-2px)',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                      }
-                    }}
+                  <Button
+                    size="small"
+                    color="primary"
+                    variant="contained"
+                    sx={{ width: '100%', borderRadius: '4px' }}
                     onClick={(e) => handleAddToCart(e, product)}
                   >
-                    {isAuthenticated ? 'Add to Cart' : 'Login to Add to Cart'}
+                    Add to Cart
                   </Button>
                 </CardActions>
               </ProductCard>
             ))}
           </ScrollContainer>
-
+          
           {showRightArrow && (
             <ScrollButton
               onClick={() => scroll('right')}

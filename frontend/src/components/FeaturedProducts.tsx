@@ -13,8 +13,8 @@ import {
   Alert,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { useCart } from '../contexts/CartContext';
+import { productService } from '../api';
 
 interface Product {
   id: string;
@@ -26,6 +26,10 @@ interface Product {
     count: number;
   };
   image: string;
+  source?: 'database' | 'frontend';
+  seller?: string;
+  storeName?: string;
+  isFeatured?: boolean;
 }
 
 const FeaturedProducts: React.FC = () => {
@@ -40,15 +44,29 @@ const FeaturedProducts: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await axios.get('http://localhost:5000/api/products');
+        const response = await productService.getProducts();
         
-        if (response.data.success) {
-          // Filter featured products (you can modify this logic based on your needs)
-          const featuredProducts = response.data.products
-            .filter((product: Product) => 
-              product.rating.rate >= 4.5 || product.rating.count >= 100
-            )
-            .slice(0, 4); // Get top 4 featured products
+        if (response.success) {
+          // First get explicitly featured products
+          let featuredProducts = response.products.filter((product: Product) => 
+            product.isFeatured === true
+          );
+          
+          // If we don't have enough featured products, add high-rated products
+          if (featuredProducts.length < 4) {
+            const highRatedProducts = response.products
+              .filter((product: Product) => 
+                !featuredProducts.some((fp: Product) => (fp._id || fp.id) === (product._id || product.id)) &&
+                (product.rating.rate >= 4.5 || product.rating.count >= 100)
+              )
+              .slice(0, 4 - featuredProducts.length);
+              
+            featuredProducts = [...featuredProducts, ...highRatedProducts];
+          }
+          
+          // Limit to 4 products
+          featuredProducts = featuredProducts.slice(0, 4);
+          
           setProducts(featuredProducts);
         } else {
           setError('Failed to load featured products. Please try again later.');
@@ -131,6 +149,13 @@ const FeaturedProducts: React.FC = () => {
                   <Typography gutterBottom variant="h6" component="h3" noWrap>
                     {product.title}
                   </Typography>
+                  
+                  {product.storeName && (
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                      Seller: {product.storeName}
+                    </Typography>
+                  )}
+                  
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                     <Rating value={product.rating.rate} precision={0.1} readOnly size="small" />
                     <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>

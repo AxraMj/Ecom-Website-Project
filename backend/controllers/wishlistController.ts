@@ -1,13 +1,14 @@
 import { Request, Response } from 'express';
 import Wishlist from '../models/Wishlist';
-
-interface AuthRequest extends Request {
-  user?: any;
-}
+import { AuthRequest } from '../types/custom';
 
 export const getWishlist = async (req: AuthRequest, res: Response) => {
   try {
-    const wishlist = await Wishlist.findOne({ userId: req.user._id });
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authorized' });
+    }
+    
+    const wishlist = await Wishlist.findOne({ userId: req.user!._id });
     res.json({ items: wishlist?.items || [] });
   } catch (error) {
     console.error('Error fetching wishlist:', error);
@@ -17,13 +18,17 @@ export const getWishlist = async (req: AuthRequest, res: Response) => {
 
 export const addToWishlist = async (req: AuthRequest, res: Response) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authorized' });
+    }
+    
     const { id, title, price, image, category, description, rating } = req.body;
 
-    let wishlist = await Wishlist.findOne({ userId: req.user._id });
+    let wishlist = await Wishlist.findOne({ userId: req.user!._id });
 
     if (!wishlist) {
       wishlist = new Wishlist({
-        userId: req.user._id,
+        userId: req.user!._id,
         items: []
       });
     }
@@ -54,9 +59,13 @@ export const addToWishlist = async (req: AuthRequest, res: Response) => {
 
 export const removeFromWishlist = async (req: AuthRequest, res: Response) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authorized' });
+    }
+    
     const productId = req.params.productId;
     
-    const wishlist = await Wishlist.findOne({ userId: req.user._id });
+    const wishlist = await Wishlist.findOne({ userId: req.user!._id });
     if (!wishlist) {
       return res.status(404).json({ message: 'Wishlist not found' });
     }

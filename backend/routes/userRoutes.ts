@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import { generateToken } from '../middleware/authMiddleware';
 import User, { IUserDocument } from '../models/User';
 import { protect } from '../middleware/authMiddleware';
+import { requestSellerStatus } from '../controllers/userController';
 
 const router = express.Router();
 
@@ -160,5 +161,8 @@ router.put('/profile', protect, async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Error updating profile' });
   }
 });
+
+// Become a seller
+router.post('/become-seller', protect, requestSellerStatus);
 
 export default router; 
