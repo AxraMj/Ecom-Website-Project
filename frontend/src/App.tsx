@@ -9,7 +9,6 @@ import ProductDetailPage from './pages/ProductDetailPage';
 import CategoryProductsPage from './pages/CategoryProductsPage';
 import TodaysDealsPage from './pages/TodaysDealsPage';
 import SearchResultsPage from './pages/SearchResultsPage';
-import AdminPanel from './pages/AdminPanel';
 import AdminLoginPage from './pages/AdminLoginPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
@@ -20,6 +19,7 @@ import CheckoutPage from './pages/CheckoutPage';
 import OrdersPage from './pages/OrdersPage';
 import { WishlistProvider } from './contexts/WishlistContext';
 import WishlistPage from './pages/WishlistPage';
+import AdminDashboard from './components/admin/AdminDashboard';
 
 const App: React.FC = () => {
   return (
@@ -41,10 +41,10 @@ const App: React.FC = () => {
                   {/* Admin routes */}
                   <Route path="/admin/login" element={<AdminLoginPage />} />
                   <Route 
-                    path="/admin/dashboard" 
+                    path="/admin/*" 
                     element={
                       <ProtectedRoute>
-                        <AdminPanel />
+                        <AdminDashboard />
                       </ProtectedRoute>
                     } 
                   />
@@ -57,6 +57,8 @@ const App: React.FC = () => {
                         : <Navigate to="/admin/login" replace />
                     } 
                   />
+                  
+                  {/* Protected user routes */}
                   <Route 
                     path="/profile" 
                     element={

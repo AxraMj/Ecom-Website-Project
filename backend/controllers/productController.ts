@@ -1,11 +1,13 @@
 import { Request, Response } from 'express';
 import Product from '../models/Product';
 import { IUserDocument } from '../models/User';
+import { IAdminDocument } from '../models/Admin';
 import { Document } from 'mongoose';
 import axios from 'axios';
 
 interface AuthRequest extends Request {
-  user?: IUserDocument;
+  user?: IUserDocument | IAdminDocument;
+  isAdmin?: boolean;
 }
 
 interface Review {
@@ -254,9 +256,26 @@ export const createProductReview = async (req: CreateReviewRequest, res: Respons
       });
     }
 
+    // Check if the user is an admin
+    if (req.isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: 'Admins cannot create reviews'
+      });
+    }
+
+    // Type guard to ensure we have a user document
+    const user = req.user as IUserDocument;
+    if (!user.name) {
+      return res.status(400).json({
+        success: false,
+        message: 'User name is required'
+      });
+    }
+
     const review: Review = {
-      user: req.user._id.toString(),
-      name: req.user.name,
+      user: user._id.toString(),
+      name: user.name,
       rating: Number(rating),
       comment
     };
@@ -271,12 +290,12 @@ export const createProductReview = async (req: CreateReviewRequest, res: Respons
     }
 
     const isReviewed = product.reviews.find(
-      (r: Review) => r.user.toString() === req.user?._id.toString()
+      (r: Review) => r.user.toString() === user._id.toString()
     );
 
     if (isReviewed) {
       product.reviews.forEach((review: Review) => {
-        if (review.user.toString() === req.user?._id.toString()) {
+        if (review.user.toString() === user._id.toString()) {
           review.comment = comment;
           review.rating = rating;
         }

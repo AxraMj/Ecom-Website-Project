@@ -36,6 +36,14 @@ interface Product {
   isFeatured: boolean;
 }
 
+interface ApiResponse {
+  success: boolean;
+  products: Product[];
+  total: number;
+  pages: number;
+  currentPage: number;
+}
+
 interface ProductListProps {
   onEditProduct: (productId: string) => void;
 }
@@ -51,8 +59,8 @@ const ProductList: React.FC<ProductListProps> = ({ onEditProduct }) => {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/products');
-      setProducts(response.data);
+      const response = await axios.get<ApiResponse>('http://localhost:5000/api/products');
+      setProducts(response.data.products);
     } catch (err) {
       setError('Failed to fetch products');
       console.error('Error fetching products:', err);

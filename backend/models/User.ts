@@ -2,22 +2,24 @@ import mongoose, { Document, Model, Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 export interface IUser {
-  name: string;
-  email: string;
-  password: string;
-  role: 'user' | 'admin';
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface IUserDocument extends Document {
   _id: Schema.Types.ObjectId;
   name: string;
   email: string;
   password: string;
   role: 'user' | 'admin';
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface IUserMethods {
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
+
+export type IUserDocument = Document<Schema.Types.ObjectId, {}, IUser> & IUser & IUserMethods;
+
+// Type for user document without methods (for query results)
+export type IUserDocumentWithoutMethods = Omit<IUserDocument, keyof IUserMethods>;
 
 export interface IUserModel extends Model<IUserDocument> {
   // Add any static methods here if needed
@@ -27,33 +29,44 @@ const userSchema = new Schema<IUserDocument>({
   name: {
     type: String,
     required: [true, 'Please enter your name'],
-    trim: true,
+    maxLength: [50, 'Your name cannot exceed 50 characters']
   },
   email: {
     type: String,
     required: [true, 'Please enter your email'],
     unique: true,
-    lowercase: true,
-    trim: true,
+    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email']
   },
   password: {
     type: String,
     required: [true, 'Please enter your password'],
-    minlength: [6, 'Password should be at least 6 characters'],
+    minLength: [6, 'Your password must be at least 6 characters long'],
+    select: false
   },
   role: {
     type: String,
     enum: ['user', 'admin'],
-    default: 'user',
+    default: 'user'
+  },
+  isActive: {
+    type: Boolean,
+    default: true
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  toJSON: {
+    transform: function(doc, ret) {
+      delete ret.password;
+      return ret;
+    }
+  }
 });
 
-// Hash password before saving
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  
+// Encrypt password before saving
+userSchema.pre('save', async function(this: IUserDocument, next) {
+  if (!this.isModified('password')) {
+    return next();
+  }
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
@@ -63,12 +76,16 @@ userSchema.pre('save', async function(next) {
   }
 });
 
-// Method to compare password
-userSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
+// Compare user password
+userSchema.methods.comparePassword = async function(
+  this: IUserDocument,
+  enteredPassword: string
+): Promise<boolean> {
   try {
-    return await bcrypt.compare(candidatePassword, this.password);
+    return await bcrypt.compare(enteredPassword, this.password);
   } catch (error) {
-    throw error;
+    console.error('Password comparison error:', error);
+    return false;
   }
 };
 
