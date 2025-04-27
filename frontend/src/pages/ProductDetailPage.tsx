@@ -22,9 +22,14 @@ import {
   Card,
   CardMedia,
   CardContent,
+  TextField,
+  Paper,
+  Avatar,
+  ListItem,
+  List,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { FavoriteBorder, Favorite } from '@mui/icons-material';
+import { FavoriteBorder, Favorite, Send } from '@mui/icons-material';
 import axios from 'axios';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -32,6 +37,14 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import { useWishlist } from '../contexts/WishlistContext';
+
+interface Review {
+  user: string;
+  name: string;
+  rating: number;
+  comment: string;
+  _id?: string;
+}
 
 interface Product {
   id: string;
@@ -51,6 +64,9 @@ interface Product {
   source?: string;
   createdAt?: string;
   updatedAt?: string;
+  reviews?: Review[];
+  numOfReviews?: number;
+  ratings?: number;
 }
 
 interface TabPanelProps {
@@ -78,6 +94,19 @@ const SizeButton = styled(Button)(({ theme }) => ({
       backgroundColor: theme.palette.primary.dark,
     },
   },
+}));
+
+const ReviewItem = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(2),
+  marginBottom: theme.spacing(2),
+  borderRadius: theme.shape.borderRadius,
+  boxShadow: theme.shadows[1],
+}));
+
+const ReviewAuthor = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  marginBottom: theme.spacing(1),
 }));
 
 const TabPanel = (props: TabPanelProps) => {
@@ -113,9 +142,16 @@ const ProductDetailPage: React.FC = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const { addToCart } = useCart();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const [isInWishlistState, setIsInWishlistState] = useState(false);
+
+  // Review states
+  const [reviewRating, setReviewRating] = useState<number | null>(0);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [reviewSuccess, setReviewSuccess] = useState<string | null>(null);
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
 
   const sizes = ['S', 'M', 'L', 'XL', 'XXL'];
 
@@ -220,6 +256,71 @@ const ProductDetailPage: React.FC = () => {
       setSnackbarMessage('Product added to wishlist');
     }
     setSnackbarOpen(true);
+  };
+
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!isAuthenticated) {
+      setReviewError('Please log in to submit a review');
+      return;
+    }
+    
+    if (!reviewRating) {
+      setReviewError('Please select a rating');
+      return;
+    }
+    
+    if (!reviewComment.trim()) {
+      setReviewError('Please enter a review comment');
+      return;
+    }
+    
+    if (!product || !product.id) {
+      setReviewError('Product information is missing');
+      return;
+    }
+    
+    setReviewSubmitting(true);
+    setReviewError(null);
+    setReviewSuccess(null);
+    
+    try {
+      const token = localStorage.getItem('userToken');
+      
+      const response = await axios.put(
+        'http://localhost:5000/api/products/review',
+        {
+          productId: product.id,
+          rating: reviewRating,
+          comment: reviewComment
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      
+      if (response.data.success) {
+        setReviewSuccess('Your review has been submitted successfully');
+        setReviewComment('');
+        setReviewRating(0);
+        
+        // Refresh product data to show the new review
+        const productResponse = await axios.get(`http://localhost:5000/api/products/product/${id}`);
+        if (productResponse.data.success) {
+          setProduct(productResponse.data.product);
+        }
+      } else {
+        setReviewError(response.data.message || 'Failed to submit review');
+      }
+    } catch (err: any) {
+      console.error('Review submission error:', err);
+      setReviewError(err.response?.data?.message || 'Error submitting review. Please try again.');
+    } finally {
+      setReviewSubmitting(false);
+    }
   };
 
   if (loading) {
@@ -327,9 +428,95 @@ const ProductDetailPage: React.FC = () => {
           </TabPanel>
 
           <TabPanel value={tabValue} index={1}>
-            <Typography variant="body1">
-              Reviews coming soon...
+            {/* Review Form */}
+            {isAuthenticated ? (
+              <Box component="form" onSubmit={handleSubmitReview} sx={{ mb: 4 }}>
+                <Typography variant="h6" gutterBottom>
+                  Write a Review
+                </Typography>
+                
+                {reviewError && (
+                  <Alert severity="error" sx={{ mb: 2 }}>
+                    {reviewError}
+                  </Alert>
+                )}
+                
+                {reviewSuccess && (
+                  <Alert severity="success" sx={{ mb: 2 }}>
+                    {reviewSuccess}
+                  </Alert>
+                )}
+                
+                <Box sx={{ mb: 2 }}>
+                  <Typography component="legend">Your Rating</Typography>
+                  <Rating
+                    name="review-rating"
+                    value={reviewRating}
+                    onChange={(_, newValue) => setReviewRating(newValue)}
+                    precision={1}
+                    size="large"
+                  />
+                </Box>
+                
+                <TextField
+                  fullWidth
+                  label="Your Review"
+                  multiline
+                  rows={4}
+                  value={reviewComment}
+                  onChange={(e) => setReviewComment(e.target.value)}
+                  margin="normal"
+                  required
+                />
+                
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  disabled={reviewSubmitting}
+                  startIcon={<Send />}
+                  sx={{ mt: 2 }}
+                >
+                  {reviewSubmitting ? 'Submitting...' : 'Submit Review'}
+                </Button>
+              </Box>
+            ) : (
+              <Alert severity="info" sx={{ mb: 3 }}>
+                Please log in to write a review
+              </Alert>
+            )}
+            
+            <Divider sx={{ my: 3 }} />
+            
+            {/* Reviews List */}
+            <Typography variant="h6" gutterBottom>
+              Customer Reviews
             </Typography>
+            
+            {product.reviews && product.reviews.length > 0 ? (
+              <List sx={{ width: '100%', pt: 0 }}>
+                {product.reviews.map((review, index) => (
+                  <ReviewItem key={review._id || index}>
+                    <ReviewAuthor>
+                      <Avatar sx={{ bgcolor: 'primary.main', mr: 2 }}>
+                        {review.name.charAt(0).toUpperCase()}
+                      </Avatar>
+                      <Box>
+                        <Typography variant="subtitle1" fontWeight="bold">
+                          {review.name}
+                        </Typography>
+                        <Rating value={review.rating} readOnly size="small" />
+                      </Box>
+                    </ReviewAuthor>
+                    <Typography variant="body1">{review.comment}</Typography>
+                  </ReviewItem>
+                ))}
+              </List>
+            ) : (
+              <Typography variant="body1" color="text.secondary">
+                No reviews yet. Be the first to review this product!
+              </Typography>
+            )}
           </TabPanel>
 
           <TabPanel value={tabValue} index={2}>

@@ -123,7 +123,30 @@ export const getSingleProduct = async (req: Request, res: Response) => {
   try {
     const productId = req.params.id;
     
-    // First try to fetch from FakeStore API since it's more likely to be a FakeStore ID
+    // First try to find in our database (more likely to have reviews)
+    try {
+      const product = await Product.findOne({
+        $or: [
+          { _id: productId },
+          { id: productId }
+        ]
+      });
+
+      if (product) {
+        return res.json({
+          success: true,
+          product: {
+            ...product.toObject(),
+            _id: (product._id as any).toString(),
+            id: product.id || (product._id as any).toString()
+          }
+        });
+      }
+    } catch (mongoError) {
+      console.error('Error fetching from MongoDB:', mongoError);
+    }
+    
+    // If not found in database, try FakeStore API
     try {
       const response = await axios.get(`https://fakestoreapi.com/products/${productId}`);
       const fakeStoreProduct = response.data;
@@ -133,32 +156,13 @@ export const getSingleProduct = async (req: Request, res: Response) => {
         product: {
           ...fakeStoreProduct,
           _id: fakeStoreProduct.id.toString(),
-          id: fakeStoreProduct.id.toString()
+          id: fakeStoreProduct.id.toString(),
+          reviews: [],
+          numOfReviews: 0
         }
       });
     } catch (fakeStoreError) {
-      // If FakeStore API fails, try MongoDB
-      try {
-        const product = await Product.findOne({
-          $or: [
-            { _id: productId },
-            { id: productId }
-          ]
-        });
-
-        if (product) {
-          return res.json({
-            success: true,
-            product: {
-              ...product.toObject(),
-              _id: (product._id as any).toString(),
-              id: product.id || (product._id as any).toString()
-            }
-          });
-        }
-      } catch (mongoError) {
-        console.error('Error fetching from MongoDB:', mongoError);
-      }
+      console.error('Error fetching from FakeStore API:', fakeStoreError);
     }
 
     // If we get here, the product wasn't found in either place
@@ -263,7 +267,46 @@ export const createProductReview = async (req: CreateReviewRequest, res: Respons
       comment
     };
 
-    const product = await Product.findById(productId) as IProductDocument;
+    // First, try to find the product in our database
+    let product = await Product.findOne({
+      $or: [
+        { _id: productId },
+        { id: productId }
+      ]
+    }) as IProductDocument | null;
+
+    // If product not found in database, create a new entry for it
+    if (!product) {
+      try {
+        // Try to get the product from the external API
+        const response = await axios.get(`https://fakestoreapi.com/products/${productId}`);
+        const externalProduct = response.data;
+        
+        // Create a new product in our database based on the external product
+        product = await Product.create({
+          title: externalProduct.title,
+          price: externalProduct.price,
+          description: externalProduct.description,
+          category: externalProduct.category,
+          image: externalProduct.image,
+          rating: externalProduct.rating,
+          productId: externalProduct.id.toString(),
+          id: externalProduct.id.toString(),
+          stock: 100,
+          isFeatured: false,
+          source: 'frontend',
+          isCustom: false
+        }) as IProductDocument;
+        
+        console.log(`Created new product in database for external product ID ${productId}`);
+      } catch (error) {
+        console.error('Error creating product from external API:', error);
+        return res.status(404).json({
+          success: false,
+          message: 'Product not found'
+        });
+      }
+    }
 
     if (!product) {
       return res.status(404).json({
@@ -296,10 +339,22 @@ export const createProductReview = async (req: CreateReviewRequest, res: Respons
     // Calculate the average rating
     product.ratings = product.reviews.reduce((acc, item) => item.rating + acc, 0) / product.reviews.length;
 
+    // Update the rating count in the rating object as well
+    if (product.rating) {
+      product.rating.rate = product.ratings;
+      product.rating.count = product.reviews.length;
+    } else {
+      product.rating = {
+        rate: product.ratings,
+        count: product.reviews.length
+      };
+    }
+
     await product.save({ validateBeforeSave: false });
 
     res.status(200).json({
-      success: true
+      success: true,
+      message: 'Review submitted successfully'
     });
   } catch (error) {
     console.error('Error creating review:', error);
