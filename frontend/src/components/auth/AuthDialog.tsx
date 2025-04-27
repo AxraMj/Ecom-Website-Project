@@ -19,6 +19,7 @@ import {
   VisibilityOff
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 interface AuthDialogProps {
   open: boolean;
@@ -31,6 +32,7 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose, onSuccess }) => 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { login, register } = useAuth();
+  const navigate = useNavigate();
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -148,15 +150,31 @@ const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose, onSuccess }) => 
     setLoading(true);
 
     try {
+      let userRole = null;
+      
       if (tab === 0) { // Login
-        await login(formData.email, formData.password);
+        userRole = await login(formData.email, formData.password);
       } else { // Register
-        await register(formData.name, formData.email, formData.password);
+        userRole = await register(formData.name, formData.email, formData.password);
       }
-      if (onSuccess) {
+      
+      // Close the dialog first
+      onClose();
+      
+      // Handle redirection based on role
+      if (userRole === 'seller') {
+        // If user is a seller, redirect to seller dashboard
+        navigate('/seller/dashboard');
+      } else if (onSuccess) {
+        // Use the success callback if provided
         onSuccess();
       } else {
-        onClose();
+        // Check if there's a stored redirect path
+        const redirectPath = sessionStorage.getItem('redirectPath');
+        if (redirectPath) {
+          sessionStorage.removeItem('redirectPath');
+          navigate(redirectPath);
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');

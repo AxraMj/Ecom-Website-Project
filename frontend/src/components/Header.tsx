@@ -376,9 +376,15 @@ const Header: React.FC = () => {
       {isAuthenticated ? (
         <>
           <MenuItem onClick={() => {
-            navigate('/profile');
+            if (user?.role === 'seller') {
+              navigate('/seller/dashboard');
+            } else {
+              navigate('/profile');
+            }
             handleMenuClose();
-          }}>Profile</MenuItem>
+          }}>
+            {user?.role === 'seller' ? 'Seller Dashboard' : 'Profile'}
+          </MenuItem>
           <MenuItem onClick={() => {
             handleMenuClose();
             navigate('/orders');
@@ -505,6 +511,14 @@ const Header: React.FC = () => {
   // Handle successful login with redirect if needed
   const handleAuthSuccess = () => {
     setAuthDialogOpen(false);
+    
+    // If user is a seller, redirect to seller dashboard
+    if (user?.role === 'seller') {
+      navigate('/seller/dashboard');
+      return;
+    }
+    
+    // Otherwise check if there's a stored redirect path
     const redirectPath = sessionStorage.getItem('redirectPath');
     if (redirectPath) {
       sessionStorage.removeItem('redirectPath');

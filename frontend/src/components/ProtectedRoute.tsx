@@ -33,6 +33,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAdmin 
           return;
         }
         
+        // If we already have the user object with role, use that
         if (user && user.role === 'seller') {
           setHasAccess(true);
           setLoading(false);
@@ -44,7 +45,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAdmin 
             headers: { Authorization: `Bearer ${userToken}` }
           });
           
-          const userData = response.data.user || response.data;
+          // Extract user data correctly with both possible response formats
+          const userData = response.data.success && response.data.user 
+            ? response.data.user 
+            : (response.data.user || response.data);
+            
           setHasAccess(userData.role === 'seller');
         } catch (error) {
           console.error('Error checking user role:', error);
@@ -78,6 +83,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAdmin 
   // Seller routes check for userToken and seller role
   if (location.pathname.startsWith('/seller')) {
     if (!hasAccess) {
+      // If they're logged in but not as a seller, redirect to profile with a message
+      if (isAuthenticated) {
+        return <Navigate to="/profile" replace state={{ sellerAccessDenied: true }} />;
+      }
       return <Navigate to="/seller/login" replace />;
     }
     return <>{children}</>;

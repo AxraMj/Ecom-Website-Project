@@ -11,8 +11,8 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<string | null>;
+  register: (name: string, email: string, password: string) => Promise<string | null>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -33,10 +33,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             headers: { Authorization: `Bearer ${token}` }
           });
           
-          console.log('Auth check response:', response.data);
+          console.log('Auth check response:', JSON.stringify(response.data));
           
-          // Handle both response formats (with or without user wrapper)
-          const userData = response.data.user || response.data;
+          // Handle the profile endpoint structure which has success and user properties
+          // response.data = { success: true, user: {...} }
+          const userData = response.data.success && response.data.user 
+            ? response.data.user 
+            : (response.data.user || response.data);
+          
+          console.log('Extracted userData:', JSON.stringify(userData));
           
           if (!userData || !userData._id) {
             console.error('Invalid user data in response:', response.data);
@@ -46,10 +51,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return;
           }
           
-          console.log('Setting user state with role:', userData.role);
+          console.log('Setting user state with: id:', userData._id, 'name:', userData.name, 'email:', userData.email, 'role:', userData.role);
           setUser({
             _id: userData._id,
-            name: userData.name,
+            name: userData.name || 'User', // Provide default if name is missing
             email: userData.email,
             role: userData.role
           });
@@ -73,27 +78,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password
       });
       
-      console.log('Login response:', response.data);
+      console.log('Login response data structure:', JSON.stringify(response.data));
       
       if (response.data.token) {
         localStorage.setItem('userToken', response.data.token);
         
-        // Check if user data is in response.data.user or directly in response.data
+        // Handle various response structures:
+        // 1. { success, token, user: {...} }
+        // 2. { token, _id, name, email, role }
         const userData = response.data.user || response.data;
+        
+        console.log('Extracted userData:', JSON.stringify(userData));
+        console.log('User properties present:', {
+          _id: !!userData._id,
+          name: !!userData.name,
+          email: !!userData.email,
+          role: !!userData.role
+        });
         
         setUser({
           _id: userData._id,
-          name: userData.name,
+          name: userData.name || 'User', // Provide default if name is missing
           email: userData.email,
           role: userData.role
         });
         
         console.log('User set in context:', {
           _id: userData._id,
-          name: userData.name,
+          name: userData.name || 'User',
           email: userData.email,
           role: userData.role
         });
+        
+        // Return the role to allow for redirecting to appropriate dashboard
+        return userData.role || null;
       } else {
         throw new Error('No token received');
       }
@@ -111,14 +129,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password
       });
       
+      console.log('Register response:', JSON.stringify(response.data));
+      
       if (response.data.token) {
         localStorage.setItem('userToken', response.data.token);
+        
+        // Extract user data, handle both possible structures
+        const userData = response.data.user || response.data;
+        
+        console.log('Register userData:', JSON.stringify(userData));
+        
         setUser({
-          _id: response.data._id,
-          name: response.data.name,
-          email: response.data.email,
-          role: response.data.role
+          _id: userData._id,
+          name: userData.name || name, // Use registered name as fallback
+          email: userData.email || email,
+          role: userData.role || 'user'
         });
+        
+        // Return the role to allow for redirecting to appropriate dashboard
+        return userData.role || 'user';
       } else {
         throw new Error('No token received');
       }

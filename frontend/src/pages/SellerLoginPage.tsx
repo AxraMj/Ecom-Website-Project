@@ -42,29 +42,10 @@ const SellerLoginPage: React.FC = () => {
     setLoading(true);
 
     try {
-      // Use the context's login function which will update user state
-      await login(email, password);
+      // Use the context's login function which will update user state and return the role
+      const userRole = await login(email, password);
       
-      // After login, check if user is a seller from the response
-      const token = localStorage.getItem('userToken');
-      console.log('Login successful, checking if user is seller with token:', token ? 'Token exists' : 'No token');
-      
-      const response = await axios.get('http://localhost:5000/api/auth/profile', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      console.log('User profile response:', response.data);
-      
-      if (!response.data.user && !response.data.role) {
-        console.error('Invalid profile response structure:', response.data);
-        setError('Invalid profile response from server');
-        setLoading(false);
-        return;
-      }
-      
-      const userData = response.data.user || response.data;
-      
-      if (userData.role !== 'seller') {
+      if (userRole !== 'seller') {
         // Not a seller, show error
         setError('This account does not have seller privileges. Please request seller status from your profile page.');
         localStorage.removeItem('userToken');
@@ -98,7 +79,10 @@ const SellerLoginPage: React.FC = () => {
 
     try {
       // First register as a regular user if not already registered
-      await login(email, password).catch(async () => {
+      let userRole = null;
+      try {
+        userRole = await login(email, password);
+      } catch {
         // If login fails, try to register
         await axios.post('http://localhost:5000/api/auth/register', {
           name,
@@ -107,8 +91,8 @@ const SellerLoginPage: React.FC = () => {
         });
         
         // Login after registration
-        await login(email, password);
-      });
+        userRole = await login(email, password);
+      }
 
       // Now request seller status
       const token = localStorage.getItem('userToken');
