@@ -20,8 +20,6 @@ import {
   People as PeopleIcon,
   ShoppingCart as ShoppingCartIcon,
   Dashboard as DashboardIcon,
-  Category as CategoryIcon,
-  Assessment as AssessmentIcon,
   Inventory as InventoryIcon,
   LocalShipping as LocalShippingIcon,
 } from '@mui/icons-material';
@@ -34,7 +32,7 @@ const drawerWidth = 240;
 
 const AdminDashboard: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [currentSection, setCurrentSection] = useState<'dashboard' | 'users' | 'products' | 'categories' | 'orders' | 'reports' | 'submissions'>('dashboard');
+  const [currentSection, setCurrentSection] = useState<'dashboard' | 'users' | 'products' | 'orders' | 'submissions'>('dashboard');
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -46,8 +44,6 @@ const AdminDashboard: React.FC = () => {
     { text: 'Users', icon: <PeopleIcon />, section: 'users' },
     { text: 'Products', icon: <ShoppingCartIcon />, section: 'products' },
     { text: 'Submissions', icon: <InventoryIcon />, section: 'submissions' },
-    { text: 'Categories', icon: <CategoryIcon />, section: 'categories' },
-    { text: 'Reports', icon: <AssessmentIcon />, section: 'reports' },
   ];
 
   const drawer = (
