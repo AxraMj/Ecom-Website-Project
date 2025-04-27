@@ -23,10 +23,12 @@ import {
   Category as CategoryIcon,
   Assessment as AssessmentIcon,
   Inventory as InventoryIcon,
+  LocalShipping as LocalShippingIcon,
 } from '@mui/icons-material';
 import UserList from './UserList';
 import ProductList from './ProductList';
 import ProductSubmissions from '../../pages/admin/ProductSubmissions';
+import OrderList from './OrderList';
 
 const drawerWidth = 240;
 
@@ -40,6 +42,7 @@ const AdminDashboard: React.FC = () => {
 
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, section: 'dashboard' },
+    { text: 'Orders', icon: <LocalShippingIcon />, section: 'orders' },
     { text: 'Users', icon: <PeopleIcon />, section: 'users' },
     { text: 'Products', icon: <ShoppingCartIcon />, section: 'products' },
     { text: 'Submissions', icon: <InventoryIcon />, section: 'submissions' },
@@ -79,6 +82,8 @@ const AdminDashboard: React.FC = () => {
         return <ProductList onEditProduct={() => {}} />;
       case 'submissions':
         return <ProductSubmissions />;
+      case 'orders':
+        return <OrderList />;
       default:
         return (
           <Typography variant="h6" component="h2">
